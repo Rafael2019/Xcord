@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>XCord — sala com voz, tela e câmera</title>
+<meta name="theme-color" content="#17181B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -172,6 +176,31 @@
   footer{margin-top:20px;font-size:12px;color:var(--dim);line-height:1.6}
   footer b{color:var(--txt);font-weight:600}
   code{font-family:var(--mono);font-size:11.5px;color:var(--accent)}
+  .check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--dim);line-height:1.4;margin:-4px 0 14px;cursor:pointer}
+  .check input{margin:1px 0 0;accent-color:var(--accent)}
+  .check i{font-style:normal;opacity:.7}
+  .peek{font-size:12.5px;color:var(--accent);margin:-4px 0 12px;font-weight:600}
+  .mic-test{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .mic-test .lvl{flex:1;min-width:80px}
+  .adv{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .adv summary{font:600 11.5px var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+  .adv .note{margin:8px 0}
+  input.txt.small{font-size:13px;padding:8px 10px;margin-top:6px}
+  .reacts{display:flex;gap:3px}
+  .reacts button{width:32px;height:32px;border-radius:50%;border:0;background:transparent;font-size:16px;cursor:pointer;line-height:1}
+  .reacts button:hover{background:var(--hover)}
+  .floaters{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .floater{position:absolute;bottom:6%;font-size:30px;animation:rise 2.6s ease-out forwards;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .floater b{display:block;font-size:11px;font-weight:600;text-align:center;color:#fff;opacity:.85}
+  @keyframes rise{0%{transform:translateY(0) scale(.7);opacity:0}12%{transform:translateY(-8%) scale(1.1);opacity:1}100%{transform:translateY(-190%) scale(1);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.floater{animation-duration:1s}}
+  .appr{display:flex;align-items:center;gap:8px;background:var(--input);border-radius:8px;padding:8px 10px;font-size:13px}
+  .appr .nm{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .appr button{border:0;border-radius:6px;padding:5px 9px;font:700 11px var(--body);cursor:pointer}
+  .appr .ok{background:var(--good);color:#fff}
+  .appr .no{background:transparent;color:var(--danger);box-shadow:inset 0 0 0 1px rgba(218,55,60,.5)}
+  .kick{background:none;border:0;color:var(--dim);cursor:pointer;font:700 13px var(--mono);padding:0 4px}
+  .kick:hover{color:var(--danger)}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);font:600 13px var(--body);padding:11px 18px;border-radius:24px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99}
   .toast.on{opacity:1}
 </style>
@@ -189,6 +218,8 @@
     <span class="top-right">
       <button class="pill accent small" id="btnShare" hidden>Copiar convite</button>
       <button class="pill small" id="btnCopyCode" hidden>Só o código</button>
+      <button class="pill small" id="btnNotif" title="Avisos do Windows quando alguém entra ou fala">avisos do sistema</button>
+      <button class="pill small" id="btnInstall" hidden>Instalar app</button>
     </span>
   </div>
 
@@ -210,9 +241,32 @@
         <label for="codeIn">Código da sala</label>
         <input class="txt code" id="codeIn" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false">
       </div>
+      <div class="field">
+        <label for="passIn">Senha <span style="text-transform:none;letter-spacing:0;font-weight:400">— opcional, combine com a galera</span></label>
+        <input class="txt" id="passIn" type="password" maxlength="24" placeholder="sem senha" autocomplete="off">
+      </div>
+      <label class="check"><input type="checkbox" id="needAppr"><span>Só entra quem eu aprovar <i>(vale se eu criar a sala)</i></span></label>
+      <div class="peek" id="peek" hidden></div>
       <button class="pill accent wide" id="btnEnter">Entrar na sala</button>
       <div class="or">ou</div>
       <button class="pill wide" id="btnCreate">Criar uma sala nova</button>
+
+      <div class="mic-test">
+        <button class="pill small" id="btnTestMic">testar microfone</button>
+        <select class="pick" id="lobbyMic" hidden></select>
+        <div class="lvl" id="testLvl" hidden><i id="testFill"></i></div>
+      </div>
+
+      <details class="adv">
+        <summary>Avançado — servidor TURN</summary>
+        <p class="note">Use se alguém não conseguir conectar (4G, NAT restrito). Fica salvo só neste navegador.</p>
+        <input class="txt small" id="turnUrl" placeholder="turn:host:3478" autocomplete="off">
+        <div class="row" style="margin-top:6px">
+          <input class="txt small" id="turnUser" placeholder="usuário" autocomplete="off" style="flex:1">
+          <input class="txt small" id="turnPass" placeholder="senha" type="password" autocomplete="off" style="flex:1">
+        </div>
+        <button class="pill small" id="btnTurnSave" style="margin-top:8px">salvar TURN</button>
+      </details>
     </div>
   </section>
 
@@ -225,6 +279,7 @@
           <span>Use o botão de tela na bandeja abaixo, ou espere alguém começar.</span>
         </div>
         <video id="stageVideo" autoplay playsinline hidden></video>
+        <div class="floaters" id="floaters"></div>
         <div id="gridBox" hidden></div>
         <div class="cams" id="cams"></div>
       </div>
@@ -234,6 +289,8 @@
         <button class="ic" id="btnMute" hidden title="Mudo"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v5"/><path d="M15 9v3a3 3 0 0 1-4.5 2.6"/><path d="M5 11a7 7 0 0 0 10.5 6"/><path d="M12 18v3"/><path d="M4 3l16 18"/></svg></button>
         <button class="ic" id="btnCam" title="Câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
         <button class="ic" id="btnScreen" title="Transmitir tela"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/><path d="M12 16.5V20"/></svg></button>
+        <button class="ic" id="btnClip" title="Salvar os últimos 30 segundos"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <span class="reacts" id="reacts"></span>
         <button class="ic" id="btnGrid" title="Grade"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg></button>
         <button class="ic" id="btnPip" hidden title="Janelinha"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><rect x="12" y="11.5" width="8" height="6" rx="1.2"/></svg></button>
         <button class="ic" id="btnFull" title="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
@@ -255,6 +312,11 @@
       <div class="box">
         <div class="box-head"><h4>Na sala</h4><span class="badge" id="count">0</span></div>
         <ul class="people" id="people"></ul>
+      </div>
+
+      <div class="box" id="apprBox" hidden>
+        <div class="box-head"><h4>Querem entrar</h4><span class="badge" id="apprCount">0</span></div>
+        <div id="apprList" style="padding:2px 10px 12px;display:grid;gap:7px"></div>
       </div>
 
       <div class="box">
@@ -294,10 +356,12 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const PEER_OPTS = { config:{ iceServers:[
-  { urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"] }
-  /* TURN: { urls:"turn:seu.host:3478", username:"u", credential:"p" } */
-]}};
+function peerOpts(){
+  const ice=[{ urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"] }];
+  const u=store.get("xcord.turnUrl",""), us=store.get("xcord.turnUser",""), pw=store.get("xcord.turnPass","");
+  if(u) ice.push({ urls:u, username:us||undefined, credential:pw||undefined });
+  return { config:{ iceServers:ice } };
+}
 const PREFIX="xcord-";
 const CODE_CHARS="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode=()=>{ let s=""; for(let i=0;i<6;i++) s+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return s; };
@@ -319,6 +383,8 @@ let feeds=new Map();         // "kind:id" -> {id,kind,name,stream,self}
 let voiceIn=new Map();       // id -> {stream,el,src,gain,an}
 let talking=new Set(), meters=new Map(), meterLoop=null;
 let dragging=false, renderQueued=false, migrating=false, leaving=false;
+let roomPass="", pending=[], blocked=new Set(), clipChunks=[], clipRec=null, clipStream=null;
+const needAppr=()=> $("needAppr").checked;
 let vols = (()=>{ try{ return JSON.parse(store.get("xcord.vols","{}")); }catch(e){ return {}; } })();
 
 /* ================= áudio: um grafo só ================= */
@@ -405,6 +471,7 @@ function renderPeople(){
     if(p.cam) bits.push("cam");
     if(p.streaming) bits.push("no ar");
     if(bits.length){ const t=document.createElement("span"); t.className="tag"+(p.streaming||p.mic?" livetag":""); t.textContent=bits.join(" · "); li.append(t); }
+    if(isHub && !self){ const k=document.createElement("button"); k.className="kick"; k.textContent="×"; k.title="Expulsar "+p.name; k.onclick=ev=>{ ev.stopPropagation(); if(confirm("Expulsar "+p.name+" da sala?")) kick(p.id); }; li.append(k); }
 
     if(!self && p.mic){               // volume individual, só de quem está no canal de voz
       const r=document.createElement("div"); r.className="volrow";
@@ -484,7 +551,7 @@ function paintStage(){
   }else{
     v.srcObject=null; $("meta").textContent=""; $("btnSound").hidden=true; $("btnPip").hidden=true;
   }
-  renderCams(); renderTabs(); syncGrid();
+  renderCams(); renderTabs(); syncGrid(); ensureClipper();
 }
 function buildGrid(list){
   const box=$("gridBox");
@@ -558,17 +625,18 @@ $("codeIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnEnter").cl
 $("nick").addEventListener("keydown",e=>{ if(e.key==="Enter") $("codeIn").focus(); });
 
 function enterRoom(code){
-  leaving=false; migrating=false;
+  leaving=false; migrating=false; roomPass=$("passIn").value.trim(); blocked=new Set(); pending=[]; renderAppr();
   code=String(code||"").trim().toUpperCase();
   if(code.length!==6) return toast("O código tem 6 caracteres");
   roomCode=code;
+  if(testStream) stopTest();
   $("lobby").style.display="none"; $("room").classList.add("on");
   $("roomChip").hidden=false; $("btnShare").hidden=false; $("btnCopyCode").hidden=false;
   $("roomCode").textContent=code; setStatus("wait","entrando…");
   claimHub(code);
 }
 function claimHub(code){
-  peer=new Peer(PREFIX+code, PEER_OPTS);
+  peer=new Peer(PREFIX+code, peerOpts());
   let settled=false;
   peer.on("open",()=>{
     if(settled) return; settled=true;
@@ -588,18 +656,24 @@ function hubListen(){
     members.push(m);
     conn.on("data",d=>{
       if(!d||typeof d!=="object") return;
+      if(d.t==="peek"){                                   // quem está no lobby só quer saber quem tem dentro
+        try{ conn.send({t:"peekres", count:roster.length, names:roster.map(r=>r.name).slice(0,4), locked:!!roomPass, appr:needAppr()}); }catch(e){}
+      }
       if(d.t==="hello"){
         m.name=String(d.name||"convidado").slice(0,18);
-        roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false});
-        renderPeople(); syncRoster();
-        addSys("entrou na sala",m.name); relay({t:"sys",name:m.name,text:"entrou na sala",kind:"join"}); sfx.join();
-        if(screenStream) callPeer("screen",m.id,screenStream);
-        if(camStream) callPeer("cam",m.id,camStream);
-        if(micOn) callPeer("voice",m.id,mixDest.stream);
+        if(blocked.has(m.name.toLowerCase())){ try{ conn.send({t:"denied",why:"expulso"}); }catch(e){} setTimeout(()=>{try{conn.close()}catch(e){}},300); return; }
+        if(roomPass && String(d.pass||"")!==roomPass){ try{ conn.send({t:"denied",why:"senha"}); }catch(e){} setTimeout(()=>{try{conn.close()}catch(e){}},300); return; }
+        if(needAppr()){ m.pending=true; pending.push(m); renderAppr(); try{ conn.send({t:"waiting"}); }catch(e){} notify("Alguém quer entrar", m.name+" está esperando aprovação","appr"); sfx.join(); return; }
+        admit(m);
+      }
+      if(d.t==="react"){ showReact(d.emoji, m.name); relay({t:"react",emoji:d.emoji,from:m.name},m.id); }
+      if(d.t==="img"){
+        addImg(m.name, d.data, false); sfx.msg(); bumpUnread(); notify(m.name, "mandou uma imagem", "chat");
+        relay({t:"img",from:m.name,data:d.data},m.id);
       }
       if(d.t==="chat"){
         const text=String(d.text||"").slice(0,500); if(!text) return;
-        addMsg(m.name,text,false); sfx.msg(); bumpUnread(); relay({t:"chat",from:m.name,text},m.id);
+        addMsg(m.name,text,false); sfx.msg(); bumpUnread(); notify(m.name,text,"chat"); relay({t:"chat",from:m.name,text},m.id);
       }
       if(d.t==="state"){
         const e=roster.find(r=>r.id===m.id);
@@ -615,17 +689,56 @@ function hubListen(){
 function dropMember(m){
   const i=members.indexOf(m); if(i<0) return;
   members.splice(i,1);
+  if(m.pending){ pending=pending.filter(x=>x!==m); renderAppr(); return; }   // desistiu na fila de aprovação
   roster=roster.filter(r=>r.id!==m.id);
   removeFeed("screen",m.id); removeFeed("cam",m.id); dropVoice(m.id);
   ["screen","cam","voice"].forEach(k=>{ const c=outCalls.get(feedKey(k,m.id)); if(c){ try{c.close();}catch(e){} outCalls.delete(feedKey(k,m.id)); } });
   if(m.name!=="convidado"){ addSys("saiu da sala",m.name); relay({t:"sys",name:m.name,text:"saiu da sala",kind:"leave"}); sfx.leave(); }
   renderPeople(); syncRoster();
 }
+function admit(m){
+  m.pending=false;
+  pending=pending.filter(x=>x!==m);
+  renderAppr();
+  if(!roster.find(r=>r.id===m.id)) roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false});
+  try{ m.conn.send({t:"admitted"}); }catch(e){}
+  renderPeople(); syncRoster();
+  addSys("entrou na sala",m.name); relay({t:"sys",name:m.name,text:"entrou na sala",kind:"join"}); sfx.join();
+  notify("Entrou na sala", m.name, "join");
+  if(screenStream) callPeer("screen",m.id,screenStream);
+  if(camStream) callPeer("cam",m.id,camStream);
+  if(micOn) callPeer("voice",m.id,mixDest.stream);
+}
+function refuse(m,why){
+  pending=pending.filter(x=>x!==m); renderAppr();
+  try{ m.conn.send({t:"denied",why:why||"recusado"}); }catch(e){}
+  setTimeout(()=>{ try{ m.conn.close(); }catch(e){} },300);
+}
+function renderAppr(){
+  const box=$("apprList"); box.innerHTML="";
+  $("apprBox").hidden = !(isHub && pending.length);
+  $("apprCount").textContent = pending.length;
+  pending.forEach(m=>{
+    const d=document.createElement("div"); d.className="appr";
+    const n=document.createElement("span"); n.className="nm"; n.textContent=m.name;
+    const ok=document.createElement("button"); ok.className="ok"; ok.textContent="aceitar"; ok.onclick=()=>admit(m);
+    const no=document.createElement("button"); no.className="no"; no.textContent="recusar"; no.onclick=()=>refuse(m);
+    d.append(n,ok,no); box.append(d);
+  });
+}
+function kick(id){
+  const m=members.find(x=>x.id===id); if(!m) return;
+  blocked.add((m.name||"").toLowerCase());
+  try{ m.conn.send({t:"denied",why:"expulso"}); }catch(e){}
+  addSys("foi expulso da sala",m.name);
+  relay({t:"sys",name:m.name,text:"foi expulso da sala",kind:"leave"});
+  setTimeout(()=>{ try{ m.conn.close(); }catch(e){} dropMember(m); },300);
+}
 function relay(msg,exceptId){ members.forEach(m=>{ if(m.conn&&m.conn.open&&m.id!==exceptId){ try{ m.conn.send(msg); }catch(e){} } }); }
 function syncRoster(){ relay({t:"roster",list:roster}); }
 
 function joinAsGuest(code){
-  peer=new Peer(PEER_OPTS);
+  peer=new Peer(peerOpts());
   peer.on("open",()=>{
     listenForCalls();
     hubConn=peer.connect(PREFIX+code,{reliable:true});
@@ -637,7 +750,7 @@ function joinAsGuest(code){
 function wireHub(conn, code, first){
   conn.on("open",()=>{
     migrating=false;
-    conn.send({t:"hello",name:myName()});
+    conn.send({t:"hello",name:myName(),pass:$("passIn").value});
     enableChat(true); setStatus("wait","na sala");
     if(first){ addSys("entrou na sala "+code,myName()); sfx.join(); }
     else{ addSys("reconectado à sala — agora com outra anfitriã."); sfx.join(); }
@@ -652,9 +765,17 @@ function wireHub(conn, code, first){
       if(camStream) callMissing("cam",camStream);
       if(micOn) callMissing("voice",mixDest.stream);
     }
-    if(d.t==="chat"){ addMsg(d.from,String(d.text||""),false); sfx.msg(); bumpUnread(); }
-    if(d.t==="sys"){ addSys(d.text,d.name); d.kind==="live"?sfx.live():d.kind==="leave"?sfx.leave():sfx.join(); }
+    if(d.t==="chat"){ addMsg(d.from,String(d.text||""),false); sfx.msg(); bumpUnread(); notify(d.from,String(d.text||""),"chat"); }
+    if(d.t==="sys"){ addSys(d.text,d.name); d.kind==="live"?sfx.live():d.kind==="leave"?sfx.leave():sfx.join(); if(d.kind==="live"||d.kind==="join") notify(d.name, d.text, "sys"); }
     if(d.t==="migrate"){ addSys("a anfitriã está saindo — a sala vai continuar."); migrate(); }
+    if(d.t==="waiting"){ setStatus("wait","aguardando aprovação"); addSys("a anfitriã precisa aprovar sua entrada…"); }
+    if(d.t==="admitted"){ setStatus("wait","na sala"); addSys("entrada aprovada."); sfx.live(); }
+    if(d.t==="denied"){
+      const why = d.why==="senha" ? "senha errada" : d.why==="expulso" ? "você foi expulso desta sala" : "a anfitriã recusou sua entrada";
+      leaving=true; toast(why); teardown(why); backToLobby(); sfx.end();
+    }
+    if(d.t==="react") showReact(d.emoji, d.from);
+    if(d.t==="img"){ addImg(d.from, d.data, false); sfx.msg(); bumpUnread(); notify(d.from,"mandou uma imagem","chat"); }
   });
   conn.on("close",()=>{ if(!leaving) migrate(); });
 }
@@ -683,7 +804,7 @@ function softReset(){   // derruba a rede, preserva tela/câmera/microfone locai
 }
 function claimAfterFall(n){
   if(!roomCode||leaving) return;
-  const p=new Peer(PREFIX+roomCode, PEER_OPTS);
+  const p=new Peer(PREFIX+roomCode, peerOpts());
   let done=false;
   p.on("open",()=>{
     done=true; peer=p; isHub=true; migrating=false;
@@ -702,7 +823,7 @@ function claimAfterFall(n){
 }
 function rejoinGuest(n){
   if(!roomCode||leaving) return;
-  const p=new Peer(PEER_OPTS);
+  const p=new Peer(peerOpts());
   let hooked=false;
   p.on("open",()=>{
     peer=p; listenForCalls();
@@ -1166,12 +1287,16 @@ $("btnShare").onclick=e=>copyText(inviteText(),e.target,isServed()?"Link da sala
 $("btnCopyCode").onclick=e=>copyText(roomCode,e.target,"Código copiado: "+roomCode);
 
 /* ================= sair ================= */
+function backToLobby(){
+  $("lobby").style.display="grid"; $("room").classList.remove("on"); $("log").innerHTML="";
+  $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true;
+  $("apprBox").hidden=true;
+}
 $("btnLeave").onclick=()=>{
   leaving=true;
   if(isHub&&members.length){ relay({t:"sys",name:myName(),text:"saiu — a sala continua",kind:"leave"}); relay({t:"migrate"}); }
   teardown("fora da sala");
-  $("lobby").style.display="grid"; $("room").classList.remove("on"); $("log").innerHTML="";
-  $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true;
+  backToLobby();
 };
 function teardown(reason){
   migrating=false;
@@ -1181,7 +1306,7 @@ function teardown(reason){
   micOn=false; muted=false;
   outCalls.forEach(c=>{ try{c.close();}catch(e){} }); outCalls.clear(); stopStats();
   voiceIn.forEach((v,id)=>dropVoice(id)); voiceIn.clear();
-  meters.forEach((m,id)=>detachMeter(id)); talking.clear();
+  meters.forEach((m,id)=>detachMeter(id)); talking.clear(); stopClipper(); pending=[]; renderAppr();
   members.forEach(m=>{ try{m.conn.close();}catch(e){} }); members=[];
   if(hubConn){ try{hubConn.close();}catch(e){} hubConn=null; }
   if(peer){ try{peer.destroy();}catch(e){} peer=null; }
@@ -1196,8 +1321,238 @@ function teardown(reason){
 }
 window.addEventListener("beforeunload",()=>{ try{ if(peer) peer.destroy(); }catch(e){} });
 
+
+/* ================= notificações do sistema ================= */
+let notifOn = store.get("xcord.notif","0")==="1";
+function syncNotifBtn(){ $("btnNotif").classList.toggle("on",notifOn); $("btnNotif").textContent = notifOn?"avisos do sistema: on":"avisos do sistema"; }
+syncNotifBtn();
+$("btnNotif").onclick=async()=>{
+  if(notifOn){ notifOn=false; store.set("xcord.notif","0"); return syncNotifBtn(); }
+  if(!("Notification" in window)) return toast("Este navegador não tem notificações");
+  const perm = Notification.permission==="granted" ? "granted" : await Notification.requestPermission();
+  if(perm!=="granted") return toast("Você bloqueou as notificações nas permissões do site");
+  notifOn=true; store.set("xcord.notif","1"); syncNotifBtn();
+  notify("XCord","Pronto — vou te avisar mesmo minimizado","test",true);
+};
+function notify(title,body,tag,force){
+  if(!notifOn || (!force && focused())) return;
+  try{ new Notification(title,{body:String(body||"").slice(0,120), tag:tag||"xcord", icon:"icon-192.png", silent:true}); }catch(e){}
+}
+
+/* ================= imagem no chat (Ctrl+V) ================= */
+function addImg(from, dataUrl, self){
+  const w=document.createElement("div"); w.className="msg"+(self?" self":"");
+  const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
+  const h=hueOf(from); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+  const col=document.createElement("div"); col.style.minWidth="0";
+  const head=document.createElement("div");
+  const who=document.createElement("span"); who.className="who"; who.textContent=from;
+  const at=document.createElement("span"); at.className="at"; at.textContent=now();
+  head.append(who,at);
+  const img=document.createElement("img");
+  img.src=dataUrl; img.alt="imagem"; img.style.cssText="max-width:100%;border-radius:8px;margin-top:4px;cursor:zoom-in;display:block";
+  img.onclick=()=>window.open(dataUrl,"_blank");
+  col.append(head,img); w.append(av,col); pushLog(w);
+}
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  const max = 1280, scale = Math.min(1, max/Math.max(bmp.width,bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width*scale); c.height = Math.round(bmp.height*scale);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  let q=0.72, out=c.toDataURL("image/jpeg",q);
+  while(out.length>420000 && q>0.35){ q-=0.12; out=c.toDataURL("image/jpeg",q); }
+  return out;
+}
+async function pasteImage(file){
+  if(!peer) return;
+  try{
+    const data=await shrink(file);
+    if(data.length>700000) return toast("Imagem grande demais");
+    addImg(myName(),data,true);
+    if(isHub) relay({t:"img",from:myName(),data});
+    else if(hubConn&&hubConn.open) hubConn.send({t:"img",data});
+  }catch(e){ toast("Não consegui ler a imagem"); }
+}
+document.addEventListener("paste", e=>{
+  if(!peer) return;
+  const items=[...(e.clipboardData&&e.clipboardData.items||[])];
+  const img=items.find(i=>i.type.startsWith("image/"));
+  if(!img) return;
+  e.preventDefault();
+  pasteImage(img.getAsFile());
+});
+
+/* ================= reações ================= */
+const EMOJIS=["👍","😂","🔥","😮","❤️","💀"];
+(function(){
+  const box=$("reacts");
+  EMOJIS.forEach(em=>{
+    const b=document.createElement("button"); b.textContent=em; b.title="Reagir "+em;
+    b.onclick=()=>{
+      if(!peer) return;
+      showReact(em,myName());
+      if(isHub) relay({t:"react",emoji:em,from:myName()});
+      else if(hubConn&&hubConn.open) hubConn.send({t:"react",emoji:em});
+    };
+    box.append(b);
+  });
+})();
+function showReact(emoji,from){
+  if(!EMOJIS.includes(emoji)) return;
+  const f=document.createElement("div"); f.className="floater";
+  f.style.left = (8+Math.random()*76)+"%";
+  f.textContent=emoji;
+  const b=document.createElement("b"); b.textContent=from||""; f.append(b);
+  $("floaters").append(f);
+  setTimeout(()=>f.remove(),2700);
+}
+
+/* ================= clipe dos últimos 30s ================= */
+function ensureClipper(){
+  const f=feeds.get(active);
+  const st=f?f.stream:null;
+  if(st===clipStream) return;
+  stopClipper();
+  if(!st || !window.MediaRecorder) return;
+  const types=["video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+  const mime=types.find(t=>MediaRecorder.isTypeSupported(t));
+  if(!mime) return;
+  try{
+    clipStream=st;
+    clipRec=new MediaRecorder(st,{mimeType:mime,videoBitsPerSecond:4000000});
+    clipRec.ondataavailable=e=>{ if(e.data&&e.data.size){ clipChunks.push(e.data); if(clipChunks.length>30) clipChunks.shift(); } };
+    clipRec.start(1000);
+  }catch(e){ clipStream=null; clipRec=null; }
+}
+function stopClipper(){
+  if(clipRec){ try{ clipRec.stop(); }catch(e){} }
+  clipRec=null; clipStream=null; clipChunks=[];
+}
+$("btnClip").onclick=()=>{
+  if(!clipChunks.length) return toast("Sem nada gravado ainda — o clipe começa junto com a transmissão");
+  const blob=new Blob(clipChunks,{type:clipChunks[0].type||"video/webm"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="xcord-clipe-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".webm";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast("Clipe salvo ("+clipChunks.length+"s)");
+};
+
+/* ================= espiar a sala antes de entrar ================= */
+let peekTimer=null, peekPeer=null;
+function schedulePeek(){
+  clearTimeout(peekTimer);
+  const c=$("codeIn").value.trim().toUpperCase();
+  $("peek").hidden=true;
+  if(c.length!==6) return;
+  peekTimer=setTimeout(()=>doPeek(c),650);
+}
+function doPeek(code){
+  if(peekPeer){ try{peekPeer.destroy();}catch(e){} }
+  const p=new Peer(peerOpts()); peekPeer=p;
+  let answered=false;
+  p.on("open",()=>{
+    const c=p.connect(PREFIX+code,{reliable:true});
+    c.on("open",()=>c.send({t:"peek"}));
+    c.on("data",d=>{
+      if(!d||d.t!=="peekres") return;
+      answered=true;
+      const nomes=(d.names||[]).join(", ");
+      $("peek").textContent = d.count+(d.count===1?" pessoa":" pessoas")+" na sala"+(nomes?": "+nomes:"")+(d.locked?" · com senha":"")+(d.appr?" · precisa de aprovação":"");
+      $("peek").hidden=false;
+      try{ p.destroy(); }catch(e){}
+    });
+  });
+  p.on("error",err=>{
+    if(answered) return;
+    if(err.type==="peer-unavailable"){ $("peek").textContent="essa sala não existe ainda — você vai criá-la"; $("peek").hidden=false; }
+    try{ p.destroy(); }catch(e){}
+  });
+  setTimeout(()=>{ try{ p.destroy(); }catch(e){} },7000);
+}
+$("codeIn").addEventListener("input",schedulePeek);
+
+/* ================= teste de microfone no lobby ================= */
+let testStream=null, testCtx=null, testRaf=null;
+$("btnTestMic").onclick=async()=>{
+  if(testStream) return stopTest();
+  try{ testStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true},video:false}); }
+  catch(e){ return toast("Não consegui acessar o microfone"); }
+  $("btnTestMic").textContent="parar teste"; $("btnTestMic").classList.add("on");
+  $("testLvl").hidden=false; $("lobbyMic").hidden=false;
+  try{
+    const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput");
+    const sel=$("lobbyMic"); sel.innerHTML="";
+    const cur=store.get("xcord.mic","");
+    devs.forEach((d,i)=>{ const o=document.createElement("option"); o.value=d.deviceId; o.textContent=d.label||("Microfone "+(i+1)); if(d.deviceId===cur) o.selected=true; sel.append(o); });
+  }catch(e){}
+  testCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const src=testCtx.createMediaStreamSource(testStream);
+  const an=testCtx.createAnalyser(); an.fftSize=512; src.connect(an);
+  const data=new Uint8Array(an.frequencyBinCount);
+  const tick=()=>{
+    an.getByteFrequencyData(data);
+    let sum=0; for(let i=0;i<data.length;i++) sum+=data[i];
+    const lvl=sum/data.length;
+    $("testFill").style.width=Math.min(100,lvl*2.2)+"%";
+    $("testFill").classList.toggle("live",lvl>8);
+    testRaf=requestAnimationFrame(tick);
+  };
+  tick();
+};
+$("lobbyMic").onchange=async e=>{
+  store.set("xcord.mic", e.target.value);
+  micDeviceId=e.target.value;
+  if(testStream){ stopTest(); $("btnTestMic").click(); }
+};
+function stopTest(){
+  if(testRaf) cancelAnimationFrame(testRaf); testRaf=null;
+  if(testStream){ testStream.getTracks().forEach(t=>t.stop()); testStream=null; }
+  if(testCtx){ try{ testCtx.close(); }catch(e){} testCtx=null; }
+  $("btnTestMic").textContent="testar microfone"; $("btnTestMic").classList.remove("on");
+  $("testLvl").hidden=true;
+}
+
+/* ================= TURN salvo pelo usuário ================= */
+$("turnUrl").value=store.get("xcord.turnUrl","");
+$("turnUser").value=store.get("xcord.turnUser","");
+$("turnPass").value=store.get("xcord.turnPass","");
+$("btnTurnSave").onclick=()=>{
+  store.set("xcord.turnUrl",$("turnUrl").value.trim());
+  store.set("xcord.turnUser",$("turnUser").value.trim());
+  store.set("xcord.turnPass",$("turnPass").value);
+  toast($("turnUrl").value.trim()?"TURN salvo — vale na próxima sala":"TURN removido");
+};
+
+/* ================= PWA ================= */
+let installEvt=null;
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt=e; $("btnInstall").hidden=false; });
+$("btnInstall").onclick=async()=>{
+  if(!installEvt) return toast("Use o menu do navegador → Instalar");
+  installEvt.prompt(); const r=await installEvt.userChoice;
+  if(r.outcome==="accepted") $("btnInstall").hidden=true;
+  installEvt=null;
+};
+window.addEventListener("appinstalled",()=>{ $("btnInstall").hidden=true; toast("XCord instalado"); });
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* ================= atalhos ================= */
+document.addEventListener("keydown", e=>{
+  if(!peer || e.ctrlKey || e.altKey || e.metaKey) return;
+  const t=e.target;
+  if(t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT")) return;
+  const k=e.key.toLowerCase();
+  if(k==="c"){ $("btnCam").click(); }
+  else if(k==="t"){ $("btnScreen").click(); }
+  else if(k==="g"){ $("btnGrid").click(); }
+});
+
 /* ================= versão e atualização ================= */
-const VERSION="2026.08.17.4";
+const VERSION="2026.08.17.5";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

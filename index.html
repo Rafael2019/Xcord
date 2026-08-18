@@ -201,6 +201,61 @@
   .appr .no{background:transparent;color:var(--danger);box-shadow:inset 0 0 0 1px rgba(218,55,60,.5)}
   .kick{background:none;border:0;color:var(--dim);cursor:pointer;font:700 13px var(--mono);padding:0 4px}
   .kick:hover{color:var(--danger)}
+
+  /* ---- sidebar de canais ---- */
+  #room.on{grid-template-columns:214px 1fr 300px}
+  #room.on.quiet{grid-template-columns:214px 1fr 366px}
+  @media (max-width:1100px){#room.on,#room.on.quiet{grid-template-columns:190px 1fr}}
+  @media (max-width:820px){#room.on,#room.on.quiet{grid-template-columns:1fr}}
+  .rail{background:var(--panel);border-radius:var(--r);padding:10px 8px;display:grid;gap:3px;align-content:start}
+  .rail h5{margin:12px 6px 3px;font:700 10.5px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+  .rail h5:first-child{margin-top:2px}
+  .ch{display:flex;align-items:center;gap:7px;width:100%;background:none;border:0;color:var(--dim);font:500 14px var(--body);text-align:left;padding:6px 8px;border-radius:6px;cursor:pointer}
+  .ch:hover{background:var(--hover);color:var(--txt)}
+  .ch.on{background:var(--input);color:var(--txt);font-weight:600}
+  .ch .hash{font-size:16px;opacity:.6;flex:none;width:15px;text-align:center}
+  .ch.on .hash{opacity:1}
+  .ch.voice.on{color:var(--accent)}
+  .ch .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ch .cnt{margin-left:auto;font:700 10px var(--mono);color:var(--dim)}
+  .ch .dotnew{margin-left:auto;background:var(--danger);color:#fff;border-radius:20px;font:700 10px var(--mono);padding:1px 6px}
+  .chmembers{display:grid;gap:1px;margin:0 0 4px 22px}
+  .chm{display:flex;align-items:center;gap:7px;padding:3px 6px;border-radius:5px;font-size:12.5px;color:var(--dim)}
+  .chm:hover{background:var(--hover)}
+  .chm.talking{color:var(--txt)}
+  .chm.talking .mini{box-shadow:0 0 0 2px var(--good)}
+  .chm.me{color:var(--accent);font-weight:600}
+  .mini{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:700 8.5px var(--mono);color:#1A1A0F;flex:none}
+  .chm .ico{margin-left:auto;font-size:10px;opacity:.8}
+
+  /* ---- sala sem transmissão ---- */
+  #vibe{display:none;padding:26px 20px 30px;background:var(--panel-2);align-content:center;gap:22px;min-height:340px}
+  #vibe.on{display:grid}
+  .vibe-head{text-align:center}
+  .vibe-head h3{margin:0 0 4px;font-family:var(--display);font-size:20px}
+  .vibe-head p{margin:0;color:var(--dim);font-size:13px}
+  .faces{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
+  .face{width:132px;display:grid;justify-items:center;gap:8px}
+  .face .big{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font:700 30px var(--mono);color:#1A1A0F;position:relative;overflow:hidden;background:var(--input)}
+  .face .big video{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .face.talking .big{box-shadow:0 0 0 3px var(--good)}
+  .face .nm{font-size:13.5px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .face.me .nm{color:var(--accent)}
+  .face .st{font:600 9.5px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .vibe-cta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+  .vibe-code{font:700 20px var(--mono);letter-spacing:.14em;color:var(--accent)}
+  .keys{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;color:var(--dim);font-size:11.5px}
+  .keys kbd{background:var(--input);border-radius:4px;padding:2px 6px;font:600 10.5px var(--mono);color:var(--txt)}
+
+  /* ---- arquivo no chat ---- */
+  .filecard{display:flex;align-items:center;gap:10px;background:var(--input);border-radius:8px;padding:9px 11px;margin-top:4px}
+  .filecard .fi{font-size:18px}
+  .filecard .fn{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .filecard .fs{font:400 10.5px var(--mono);color:var(--dim)}
+  .filecard a{margin-left:auto;background:var(--accent);color:var(--on-accent);text-decoration:none;font:700 11px var(--body);padding:6px 10px;border-radius:6px;flex:none}
+  .chlog{display:none;flex-direction:column;gap:2px}
+  .chlog.on{display:flex}
+  .droparea.over{outline:2px dashed var(--accent);outline-offset:-6px}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);font:600 13px var(--body);padding:11px 18px;border-radius:24px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99}
   .toast.on{opacity:1}
 </style>
@@ -272,11 +327,27 @@
 
   <!-- SALA -->
   <section id="room">
+
+    <nav class="rail" id="rail"></nav>
+
     <div class="stagewrap">
+      <div id="vibe">
+        <div class="vibe-head">
+          <h3 id="vibeTitle">Sala</h3>
+          <p id="vibeSub">Ninguém transmitindo agora.</p>
+        </div>
+        <div class="faces" id="faces"></div>
+        <div class="vibe-cta">
+          <span class="vibe-code" id="vibeCode">······</span>
+          <button class="pill accent small" id="btnShare2">Copiar convite</button>
+        </div>
+        <div class="keys"><kbd>M</kbd> mudo <kbd>C</kbd> câmera <kbd>T</kbd> tela <kbd>G</kbd> grade <kbd>V</kbd> falar</div>
+      </div>
+
       <div class="screen-holder" id="holder">
-        <div class="empty" id="stageEmpty">
+        <div class="empty" id="stageEmpty" hidden>
           <b>Ninguém transmitindo</b>
-          <span>Use o botão de tela na bandeja abaixo, ou espere alguém começar.</span>
+          <span>Use o botão de tela na bandeja abaixo.</span>
         </div>
         <video id="stageVideo" autoplay playsinline hidden></video>
         <div class="floaters" id="floaters"></div>
@@ -285,16 +356,16 @@
       </div>
       <div class="tabs" id="tabs"></div>
       <div class="tray">
-        <button class="ic" id="btnMic" title="Microfone"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+        <button class="ic" id="btnMic" title="Ligar microfone"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
         <button class="ic" id="btnMute" hidden title="Mudo"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v5"/><path d="M15 9v3a3 3 0 0 1-4.5 2.6"/><path d="M5 11a7 7 0 0 0 10.5 6"/><path d="M12 18v3"/><path d="M4 3l16 18"/></svg></button>
-        <button class="ic" id="btnCam" title="Câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
+        <button class="ic" id="btnCam" title="Ligar câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
         <button class="ic" id="btnScreen" title="Transmitir tela"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/><path d="M12 16.5V20"/></svg></button>
         <button class="ic" id="btnClip" title="Salvar os últimos 30 segundos"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg></button>
         <span class="reacts" id="reacts"></span>
-        <button class="ic" id="btnGrid" title="Grade"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg></button>
+        <button class="ic" id="btnGrid" title="Ver em grade"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg></button>
         <button class="ic" id="btnPip" hidden title="Janelinha"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2"/><rect x="12" y="11.5" width="8" height="6" rx="1.2"/></svg></button>
         <button class="ic" id="btnFull" title="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
-        <button class="ic" id="btnSound" hidden title="Áudio da transmissão"><svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18.8 7a7 7 0 0 1 0 10"/></svg></button>
+        <button class="ic" id="btnSound" hidden title="Ativar áudio"><svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18.8 7a7 7 0 0 1 0 10"/></svg></button>
         <span class="tray-right">
           <span class="status" id="status" data-s="off"><span class="dot"></span><span class="txt">fora da sala</span></span>
           <span class="meta" id="meta"></span>
@@ -309,23 +380,25 @@
     </div>
 
     <div class="side">
-      <div class="box">
-        <div class="box-head"><h4>Na sala</h4><span class="badge" id="count">0</span></div>
-        <ul class="people" id="people"></ul>
-      </div>
-
       <div class="box" id="apprBox" hidden>
         <div class="box-head"><h4>Querem entrar</h4><span class="badge" id="apprCount">0</span></div>
         <div id="apprList" style="padding:2px 10px 12px;display:grid;gap:7px"></div>
       </div>
 
       <div class="box">
-        <div class="box-head"><h4>Bate-papo</h4><span class="row"><span class="badge alert" id="unread" hidden>0</span><button class="pill small" id="btnSfx">avisos: on</button></span></div>
-        <div class="log" id="log"></div>
+        <div class="box-head"><h4 id="chTitle">#geral</h4><span class="row"><span class="badge alert" id="unread" hidden>0</span><button class="pill small" id="btnSfx">avisos: on</button></span></div>
+        <div class="log droparea" id="log"></div>
         <div class="composer">
+          <button class="pill small" id="btnAttach" title="Enviar arquivo">+</button>
           <input id="chatIn" maxlength="500" placeholder="Escreva uma mensagem" autocomplete="off" disabled>
           <button class="pill accent" id="btnSend" disabled>Enviar</button>
         </div>
+        <input type="file" id="fileAny" hidden>
+      </div>
+
+      <div class="box">
+        <div class="box-head"><h4>Na sala</h4><span class="badge" id="count">0</span></div>
+        <ul class="people" id="people"></ul>
       </div>
 
       <div class="box" id="audioBox" hidden>
@@ -337,7 +410,7 @@
             <input type="range" id="sens" min="0" max="100" step="1">
             <span class="volnum" id="sensNum">18</span>
           </div>
-          <div style="font-size:11.5px;color:var(--dim);line-height:1.5" id="audioHint">A barra fica verde quando você está sendo ouvido. Suba a sensibilidade até o ruído do quarto parar de passar.</div>
+          <div style="font-size:11.5px;color:var(--dim);line-height:1.5" id="audioHint">A barra fica verde quando você está sendo ouvido.</div>
         </div>
       </div>
 
@@ -385,6 +458,11 @@ let talking=new Set(), meters=new Map(), meterLoop=null;
 let dragging=false, renderQueued=false, migrating=false, leaving=false;
 let roomPass="", pending=[], blocked=new Set(), clipChunks=[], clipRec=null, clipStream=null;
 const needAppr=()=> $("needAppr").checked;
+const TEXT_CH=[{id:"geral",name:"geral"},{id:"arquivos",name:"arquivos",files:true}];
+const VOICE_CH=[{id:"conversa",name:"Conversa"},{id:"jogatina",name:"Jogatina"},{id:"afk",name:"AFK"}];
+let myText="geral", myVoice=null, unreadCh={};
+const chName=id=>(VOICE_CH.find(c=>c.id===id)||{}).name||id;
+const isFileCh=id=>!!(TEXT_CH.find(c=>c.id===id)||{}).files;
 let vols = (()=>{ try{ return JSON.parse(store.get("xcord.vols","{}")); }catch(e){ return {}; } })();
 
 /* ================= áudio: um grafo só ================= */
@@ -426,21 +504,35 @@ const sfx={ join:()=>beeps([[587,0],[880,.08]]), leave:()=>beeps([[587,0],[392,.
   msg:()=>beeps([[1046,0]],"triangle",.07), live:()=>beeps([[784,0],[1046,.07],[1318,.14]]), end:()=>beeps([[440,0],[330,.1],[247,.2]]) };
 
 /* ================= chat / lista ================= */
-function pushLog(node){ const l=$("log"), stick=l.scrollHeight-l.scrollTop-l.clientHeight<60; l.append(node); if(stick) l.scrollTop=l.scrollHeight; }
-function addMsg(from,text,self){
+function logEl(ch){
+  ch = ch || "geral";
+  let el=document.getElementById("log-"+ch);
+  if(!el){ el=document.createElement("div"); el.className="chlog"; el.id="log-"+ch; $("log").append(el); }
+  el.classList.toggle("on", ch===myText);
+  return el;
+}
+function pushLog(node,ch){
+  ch = ch || myText;
+  const el=logEl(ch), l=$("log");
+  const stick = l.scrollHeight-l.scrollTop-l.clientHeight<60;
+  el.append(node);
+  if(ch===myText){ if(stick) l.scrollTop=l.scrollHeight; }
+  else { unreadCh[ch]=(unreadCh[ch]||0)+1; renderRail(); }
+}
+function addMsg(from,text,self,ch){
   const w=document.createElement("div"); w.className="msg"+(self?" self":"");
   const h=document.createElement("div");
   const who=document.createElement("span"); who.className="who"; who.textContent=from;
   const at=document.createElement("span"); at.className="at"; at.textContent=now();
   h.append(who,at);
   const p=document.createElement("p"); p.textContent=text;
-  w.append(h,p); pushLog(w);
+  w.append(h,p); pushLog(w,ch);
 }
-function addSys(text,name){
+function addSys(text,name,ch){
   const d=document.createElement("div"); d.className="sys";
   if(name){ const b=document.createElement("b"); b.textContent=name; d.append(b,document.createTextNode(" "+text)); }
   else d.textContent=text;
-  pushLog(d);
+  pushLog(d,ch||"geral");
 }
 function volOf(name){ const v=vols[name]; return v===undefined?100:v; }
 function setVol(name,v){ vols[name]=v; store.set("xcord.vols", JSON.stringify(vols)); }
@@ -495,6 +587,7 @@ function renderPeople(){
   const live=roster.filter(p=>p.streaming).map(p=>p.name);
   if(!peer) setStatus("off","fora da sala");
   else if(live.length) setStatus("live", live.length===1? live[0]+" transmitindo" : live.length+" transmitindo");
+  else if(myVoice) setStatus("wait", chName(myVoice)+" · "+roster.filter(r=>r.ch===myVoice).length+" no canal");
   else setStatus("wait", roster.length>1 ? "na sala · "+roster.length+" pessoas" : "na sala · sozinho aqui");
   document.body.dataset.live = live.length?"1":"0";
 }
@@ -502,6 +595,94 @@ function setStatus(s,t){ const el=$("status"); el.dataset.s=s; el.querySelector(
 function paintTalking(){
   document.querySelectorAll("#people li").forEach(li=> li.classList.toggle("talking", talking.has(li.dataset.id)));
   if(gridMode && feeds.size>1) buildGrid([...feeds.entries()]);
+  if(!feeds.size) renderFaces(); else renderRail();
+}
+
+/* ================= canais ================= */
+function renderRail(){
+  const rail=$("rail"); rail.innerHTML="";
+  const h1=document.createElement("h5"); h1.textContent="Canais de texto"; rail.append(h1);
+  TEXT_CH.forEach(c=>{
+    const b=document.createElement("button"); b.className="ch"+(myText===c.id?" on":"");
+    const hs=document.createElement("span"); hs.className="hash"; hs.textContent="#";
+    const n=document.createElement("span"); n.className="n"; n.textContent=c.name;
+    b.append(hs,n);
+    if(unreadCh[c.id] && myText!==c.id){ const d=document.createElement("span"); d.className="dotnew"; d.textContent=unreadCh[c.id]; b.append(d); }
+    b.onclick=()=>selectText(c.id);
+    rail.append(b);
+  });
+  const h2=document.createElement("h5"); h2.textContent="Canais de voz"; rail.append(h2);
+  VOICE_CH.forEach(c=>{
+    const gente=roster.filter(r=>r.ch===c.id);
+    const b=document.createElement("button"); b.className="ch voice"+(myVoice===c.id?" on":"");
+    const hs=document.createElement("span"); hs.className="hash"; hs.textContent="🔊";
+    const n=document.createElement("span"); n.className="n"; n.textContent=c.name;
+    b.append(hs,n);
+    if(gente.length){ const q=document.createElement("span"); q.className="cnt"; q.textContent=gente.length; b.append(q); }
+    b.title = myVoice===c.id ? "Sair deste canal" : "Entrar em "+c.name;
+    b.onclick=()=>myVoice===c.id?leaveVoice():joinVoice(c.id);
+    rail.append(b);
+    if(gente.length){
+      const ul=document.createElement("div"); ul.className="chmembers";
+      gente.forEach(pp=>{
+        const self = peer && pp.id===peer.id;
+        const li=document.createElement("div"); li.className="chm"+(talking.has(pp.id)?" talking":"")+(self?" me":"");
+        const av=document.createElement("span"); av.className="mini"; av.textContent=initials(pp.name);
+        const h=hueOf(pp.name); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+        const nm=document.createElement("span"); nm.textContent=pp.name;
+        li.append(av,nm);
+        const marks=[]; if(pp.streaming) marks.push("🖥"); if(pp.cam) marks.push("📹");
+        if(marks.length){ const i=document.createElement("span"); i.className="ico"; i.textContent=marks.join(" "); li.append(i); }
+        ul.append(li);
+      });
+      rail.append(ul);
+    }
+  });
+}
+function selectText(id){
+  myText=id; unreadCh[id]=0;
+  $("chTitle").textContent="#"+((TEXT_CH.find(c=>c.id===id)||{}).name||id);
+  TEXT_CH.forEach(c=>logEl(c.id));
+  $("chatIn").placeholder = isFileCh(id) ? "Comente o arquivo (opcional)" : "Escreva uma mensagem";
+  renderRail(); clearUnread();
+  $("log").scrollTop=$("log").scrollHeight;
+}
+function joinVoice(id){
+  if(!peer) return;
+  myVoice=id;
+  announce({ch:id}, "entrou em "+chName(id));
+  addSys("você entrou em "+chName(id));
+  syncMesh(); renderRail(); renderPeople(); sfx.join();
+}
+function leaveVoice(){
+  if(!myVoice) return;
+  const antigo=chName(myVoice);
+  myVoice=null;
+  if(screenStream) stopScreen();
+  if(camStream) stopCam();
+  if(micOn) stopMic();
+  announce({ch:null}, "saiu de "+antigo);
+  addSys("você saiu de "+antigo);
+  syncMesh(); renderRail(); renderPeople(); sfx.leave();
+}
+function sameVoice(id){
+  if(!myVoice) return false;
+  const pp=roster.find(r=>r.id===id);
+  return !!(pp && pp.ch===myVoice);
+}
+function syncMesh(){
+  outCalls.forEach((c,k)=>{
+    const id=k.slice(k.indexOf(":")+1);
+    if(!sameVoice(id)){ try{ c.close(); }catch(e){} outCalls.delete(k); }
+  });
+  [...voiceIn.keys()].forEach(id=>{ if(!sameVoice(id)) dropVoice(id); });
+  [...feeds.entries()].forEach(([k,f])=>{ if(!f.self && !sameVoice(f.id)) feeds.delete(k); });
+  if(myVoice){
+    if(screenStream) callMissing("screen",screenStream);
+    if(camStream) callMissing("cam",camStream);
+    if(micOn) callMissing("voice",mixDest.stream);
+  }
+  paintStage();
 }
 
 /* ================= palco: telas, câmeras e grade ================= */
@@ -531,9 +712,14 @@ function syncGrid(){ $("btnGrid").classList.toggle("on",gridMode); setLbl("btnGr
 
 function paintStage(){
   const list=[...feeds.entries()];
+  const vazio = list.length===0;
+  $("vibe").classList.toggle("on", vazio);
+  $("holder").hidden = vazio;
+  $("room").classList.toggle("quiet", vazio);     // sem transmissão, o chat cresce
+  if(vazio){ renderFaces(); $("tabs").innerHTML=""; $("meta").textContent=""; $("btnSound").hidden=true; $("btnPip").hidden=true; ensureClipper(); return; }
   const useGrid = gridMode && list.length>1;
   const v=$("stageVideo"), f=feeds.get(active);
-  $("stageEmpty").hidden = list.length>0;
+  $("stageEmpty").hidden = true;
   $("gridBox").hidden = !useGrid;
   $("cams").hidden = useGrid;
   v.hidden = useGrid || !f;
@@ -611,6 +797,94 @@ $("btnPip").onclick=async()=>{
 };
 $("btnSound").onclick=async()=>{ const v=$("stageVideo"); v.muted=!v.muted; setLbl("btnSound", v.muted?"Ativar áudio":"Silenciar"); $("btnSound").classList.toggle("on",!v.muted); try{ await v.play(); }catch(e){} };
 
+/* rostos da sala quando ninguém está transmitindo */
+function renderFaces(){
+  const box=$("faces"); box.innerHTML="";
+  $("vibeCode").textContent = roomCode || "······";
+  const gente = myVoice ? roster.filter(r=>r.ch===myVoice) : [];
+  if(!myVoice){
+    $("vibeTitle").textContent = "Você não está num canal de voz";
+    $("vibeSub").textContent = "Clique num canal de voz à esquerda para conversar. O bate-papo funciona de qualquer jeito.";
+  }else{
+    $("vibeTitle").textContent = chName(myVoice);
+    $("vibeSub").textContent = gente.length>1
+      ? "Ninguém transmitindo. Aperte o botão de tela quando quiser."
+      : "Você está sozinho neste canal — chame alguém.";
+  }
+  gente.forEach(pp=>{
+    const self = peer && pp.id===peer.id;
+    const f=document.createElement("div");
+    f.className="face"+(talking.has(pp.id)?" talking":"")+(self?" me":"");
+    const big=document.createElement("div"); big.className="big";
+    const h=hueOf(pp.name);
+    const camFeed = feeds.get("cam:"+pp.id);
+    if(camFeed){
+      const v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true; v.srcObject=camFeed.stream;
+      big.append(v); v.play().catch(()=>{});
+    }else{
+      big.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+      big.textContent=initials(pp.name);
+    }
+    const nm=document.createElement("div"); nm.className="nm"; nm.textContent=pp.name;
+    f.append(big,nm);
+    const st=[]; if(pp.hub) st.push("anfitriã"); if(pp.mic) st.push("no mic"); else st.push("sem mic");
+    const sd=document.createElement("div"); sd.className="st"; sd.textContent=st.join(" · ");
+    f.append(sd);
+    box.append(f);
+  });
+}
+$("btnShare2").onclick=e=>copyText(inviteText(),e.target,isServed()?"Link da sala copiado":"Convite copiado");
+
+/* ================= arquivos no chat ================= */
+const MAX_FILE=10*1024*1024;
+function fmtSize(n){ return n>1048576 ? (n/1048576).toFixed(1)+" MB" : Math.max(1,Math.round(n/1024))+" KB"; }
+function addFileMsg(from,msg,self){
+  if(String(msg.mime||"").startsWith("image/")){
+    try{
+      const url=URL.createObjectURL(new Blob([msg.data],{type:msg.mime}));
+      return addImg(from,url,self,msg.ch);
+    }catch(e){}
+  }
+  const w=document.createElement("div"); w.className="msg"+(self?" self":"");
+  const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
+  const h=hueOf(from); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+  const col=document.createElement("div"); col.style.minWidth="0";
+  const head=document.createElement("div");
+  const who=document.createElement("span"); who.className="who"; who.textContent=from;
+  const at=document.createElement("span"); at.className="at"; at.textContent=now();
+  head.append(who,at);
+  const card=document.createElement("div"); card.className="filecard";
+  const fi=document.createElement("span"); fi.className="fi"; fi.textContent="📄";
+  const info=document.createElement("div"); info.style.minWidth="0";
+  const fn=document.createElement("div"); fn.className="fn"; fn.textContent=msg.name||"arquivo";
+  const fs=document.createElement("div"); fs.className="fs"; fs.textContent=fmtSize(msg.size||0);
+  info.append(fn,fs);
+  const a=document.createElement("a"); a.textContent="baixar"; a.download=msg.name||"arquivo";
+  try{ a.href=URL.createObjectURL(new Blob([msg.data],{type:msg.mime||"application/octet-stream"})); }catch(e){ a.textContent="erro"; }
+  card.append(fi,info,a);
+  col.append(head,card); w.append(av,col); pushLog(w,msg.ch);
+}
+async function sendFile(file){
+  if(!peer||!file) return;
+  if(file.size>MAX_FILE) return toast("Máximo de 10 MB por arquivo");
+  if(file.type.startsWith("image/")) return pasteImage(file);
+  toast("Enviando "+file.name+"…");
+  const data=await file.arrayBuffer();
+  const msg={name:file.name.slice(0,60),mime:file.type||"application/octet-stream",size:file.size,data,ch:myText};
+  addFileMsg(myName(),msg,true);
+  if(isHub) relay({t:"file",from:myName(),...msg});
+  else if(hubConn&&hubConn.open) hubConn.send({t:"file",...msg});
+}
+$("btnAttach").onclick=()=>$("fileAny").click();
+$("fileAny").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) sendFile(f); };
+$("log").addEventListener("dragover",e=>{ e.preventDefault(); $("log").classList.add("over"); });
+$("log").addEventListener("dragleave",()=>$("log").classList.remove("over"));
+$("log").addEventListener("drop",e=>{
+  e.preventDefault(); $("log").classList.remove("over");
+  const f=e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(f) sendFile(f);
+});
+
 /* ================= entrar / sair ================= */
 $("nick").value=store.get("xcord.nick","");
 $("nick").addEventListener("input", e=> store.set("xcord.nick", e.target.value.trim()));
@@ -630,7 +904,9 @@ function enterRoom(code){
   if(code.length!==6) return toast("O código tem 6 caracteres");
   roomCode=code;
   if(testStream) stopTest();
+  myVoice=null; unreadCh={}; myText="geral";
   $("lobby").style.display="none"; $("room").classList.add("on");
+  selectText("geral"); renderRail(); paintStage();
   $("roomChip").hidden=false; $("btnShare").hidden=false; $("btnCopyCode").hidden=false;
   $("roomCode").textContent=code; setStatus("wait","entrando…");
   claimHub(code);
@@ -641,7 +917,7 @@ function claimHub(code){
   peer.on("open",()=>{
     if(settled) return; settled=true;
     isHub=true;
-    roster=[{id:peer.id,name:myName(),hub:true,streaming:false,cam:false,mic:false}];
+    roster=[{id:peer.id,name:myName(),hub:true,streaming:false,cam:false,mic:false,ch:myVoice}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("sala "+code+" criada. Passe o convite para a galera."); sfx.join();
   });
@@ -668,17 +944,22 @@ function hubListen(){
       }
       if(d.t==="react"){ showReact(d.emoji, m.name); relay({t:"react",emoji:d.emoji,from:m.name},m.id); }
       if(d.t==="img"){
-        addImg(m.name, d.data, false); sfx.msg(); bumpUnread(); notify(m.name, "mandou uma imagem", "chat");
-        relay({t:"img",from:m.name,data:d.data},m.id);
+        addImg(m.name, d.data, false, d.ch); sfx.msg(); bumpUnread(); notify(m.name, "mandou uma imagem", "chat");
+        relay({t:"img",from:m.name,data:d.data,ch:d.ch},m.id);
       }
       if(d.t==="chat"){
         const text=String(d.text||"").slice(0,500); if(!text) return;
-        addMsg(m.name,text,false); sfx.msg(); bumpUnread(); notify(m.name,text,"chat"); relay({t:"chat",from:m.name,text},m.id);
+        addMsg(m.name,text,false,d.ch); sfx.msg(); bumpUnread(); notify(m.name,text,"chat");
+        relay({t:"chat",from:m.name,text,ch:d.ch},m.id);
+      }
+      if(d.t==="file"){
+        addFileMsg(m.name,d,false); sfx.msg(); bumpUnread(); notify(m.name,"mandou "+d.name,"chat");
+        relay({t:"file",from:m.name,name:d.name,mime:d.mime,size:d.size,data:d.data,ch:d.ch},m.id);
       }
       if(d.t==="state"){
         const e=roster.find(r=>r.id===m.id);
-        if(e){ if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming; }
-        renderPeople(); syncRoster();
+        if(e){ if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming; if("ch" in d) e.ch=d.ch||null; }
+        renderPeople(); syncRoster(); renderRail(); syncMesh();
         if(d.say){ addSys(d.say,m.name); relay({t:"sys",name:m.name,text:d.say,kind:d.kind||"join"}); d.kind==="live"?sfx.live():sfx.join(); }
       }
     });
@@ -700,14 +981,12 @@ function admit(m){
   m.pending=false;
   pending=pending.filter(x=>x!==m);
   renderAppr();
-  if(!roster.find(r=>r.id===m.id)) roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false});
+  if(!roster.find(r=>r.id===m.id)) roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false,ch:null});
   try{ m.conn.send({t:"admitted"}); }catch(e){}
   renderPeople(); syncRoster();
   addSys("entrou na sala",m.name); relay({t:"sys",name:m.name,text:"entrou na sala",kind:"join"}); sfx.join();
   notify("Entrou na sala", m.name, "join");
-  if(screenStream) callPeer("screen",m.id,screenStream);
-  if(camStream) callPeer("cam",m.id,camStream);
-  if(micOn) callPeer("voice",m.id,mixDest.stream);
+  syncMesh(); renderRail();
 }
 function refuse(m,why){
   pending=pending.filter(x=>x!==m); renderAppr();
@@ -760,12 +1039,11 @@ function wireHub(conn, code, first){
   conn.on("data",d=>{
     if(!d||typeof d!=="object") return;
     if(d.t==="roster"){
-      roster=d.list; renderPeople(); voiceIn.forEach((v,id)=>applyVol(id));
-      if(screenStream) callMissing("screen",screenStream);
-      if(camStream) callMissing("cam",camStream);
-      if(micOn) callMissing("voice",mixDest.stream);
+      roster=d.list; renderPeople(); renderRail(); voiceIn.forEach((v,id)=>applyVol(id));
+      syncMesh();
     }
-    if(d.t==="chat"){ addMsg(d.from,String(d.text||""),false); sfx.msg(); bumpUnread(); notify(d.from,String(d.text||""),"chat"); }
+    if(d.t==="chat"){ addMsg(d.from,String(d.text||""),false,d.ch); sfx.msg(); bumpUnread(); notify(d.from,String(d.text||""),"chat"); }
+    if(d.t==="file"){ addFileMsg(d.from,d,false); sfx.msg(); bumpUnread(); notify(d.from,"mandou "+d.name,"chat"); }
     if(d.t==="sys"){ addSys(d.text,d.name); d.kind==="live"?sfx.live():d.kind==="leave"?sfx.leave():sfx.join(); if(d.kind==="live"||d.kind==="join") notify(d.name, d.text, "sys"); }
     if(d.t==="migrate"){ addSys("a anfitriã está saindo — a sala vai continuar."); migrate(); }
     if(d.t==="waiting"){ setStatus("wait","aguardando aprovação"); addSys("a anfitriã precisa aprovar sua entrada…"); }
@@ -775,7 +1053,7 @@ function wireHub(conn, code, first){
       leaving=true; toast(why); teardown(why); backToLobby(); sfx.end();
     }
     if(d.t==="react") showReact(d.emoji, d.from);
-    if(d.t==="img"){ addImg(d.from, d.data, false); sfx.msg(); bumpUnread(); notify(d.from,"mandou uma imagem","chat"); }
+    if(d.t==="img"){ addImg(d.from, d.data, false, d.ch); sfx.msg(); bumpUnread(); notify(d.from,"mandou uma imagem","chat"); }
   });
   conn.on("close",()=>{ if(!leaving) migrate(); });
 }
@@ -808,7 +1086,7 @@ function claimAfterFall(n){
   let done=false;
   p.on("open",()=>{
     done=true; peer=p; isHub=true; migrating=false;
-    roster=[{id:peer.id,name:myName(),hub:true,streaming:!!screenStream,cam:!!camStream,mic:micOn}];
+    roster=[{id:peer.id,name:myName(),hub:true,streaming:!!screenStream,cam:!!camStream,mic:micOn,ch:myVoice}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("você virou a anfitriã da sala "+roomCode+". Quem estava dentro volta em alguns segundos.");
     sfx.live();
@@ -853,6 +1131,7 @@ function handlePeerError(err){
 function listenForCalls(){
   peer.on("call",call=>{
     const kind=(call.metadata&&call.metadata.kind)||"screen";
+    if(!sameVoice(call.peer)){ try{ call.close(); }catch(e){} return; }
     call.answer();
     if(kind==="voice"){
       call.on("stream",s=>attachVoice(call.peer,s));
@@ -898,7 +1177,7 @@ function callPeer(kind,id,stream){
     call.on("error",()=>outCalls.delete(feedKey(kind,id)));
   }catch(e){}
 }
-function callMissing(kind,stream){ roster.forEach(p=>{ if(peer&&p.id!==peer.id&&!outCalls.has(feedKey(kind,p.id))) callPeer(kind,p.id,stream); }); }
+function callMissing(kind,stream){ roster.forEach(p=>{ if(peer&&p.id!==peer.id&&sameVoice(p.id)&&!outCalls.has(feedKey(kind,p.id))) callPeer(kind,p.id,stream); }); }
 function closeKind(kind){ outCalls.forEach((c,k)=>{ if(k.startsWith(kind+":")){ try{c.close();}catch(e){} outCalls.delete(k); } }); }
 
 /* ================= estado próprio ================= */
@@ -906,7 +1185,7 @@ function announce(patch,say,kind){
   if(isHub){
     const e=roster.find(r=>r.id===peer.id);
     if(e) Object.assign(e,patch);
-    renderPeople(); syncRoster();
+    renderPeople(); syncRoster(); renderRail();
     if(say) relay({t:"sys",name:myName(),text:say,kind:kind||"join"});
   }else if(hubConn&&hubConn.open){
     hubConn.send({t:"state",...patch,say,kind});
@@ -917,6 +1196,7 @@ function announce(patch,say,kind){
 $("btnScreen").onclick=async()=>{
   if(screenStream) return stopScreen();
   if(!peer) return toast("Entre numa sala primeiro");
+  if(!myVoice) return toast("Entre num canal de voz para transmitir");
   const fps=targetFps();
   try{
     screenStream=await navigator.mediaDevices.getDisplayMedia({
@@ -981,6 +1261,7 @@ function stopStats(){ if(statsTimer){ clearInterval(statsTimer); statsTimer=null
 $("btnCam").onclick=async()=>{
   if(camStream) return stopCam();
   if(!peer) return toast("Entre numa sala primeiro");
+  if(!myVoice) return toast("Entre num canal de voz para ligar a câmera");
   try{ camStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},frameRate:{ideal:24}},audio:false}); }
   catch(e){ toast("Não consegui acessar a câmera"); return; }
   setLbl("btnCam","Desligar câmera"); $("btnCam").classList.add("on");
@@ -1005,6 +1286,7 @@ function stopCam(){
 $("btnMic").onclick=async()=>{
   if(!peer) return toast("Entre numa sala primeiro");
   if(micOn) return stopMic();
+  if(!myVoice) return toast("Entre num canal de voz para falar");
   ensureAudio();
   if(!await setMicSource(micDeviceId)) return;
   micOn=true; muted=false;
@@ -1267,9 +1549,9 @@ $("log").addEventListener("click", clearUnread);
 function enableChat(on){ $("chatIn").disabled=!on; $("btnSend").disabled=!on; if(on) $("chatIn").focus(); }
 function sendChat(){
   const text=$("chatIn").value.trim(); if(!text) return;
-  $("chatIn").value=""; addMsg(myName(),text,true);
-  if(isHub) relay({t:"chat",from:myName(),text});
-  else if(hubConn&&hubConn.open) hubConn.send({t:"chat",text});
+  $("chatIn").value=""; addMsg(myName(),text,true,myText);
+  if(isHub) relay({t:"chat",from:myName(),text,ch:myText});
+  else if(hubConn&&hubConn.open) hubConn.send({t:"chat",text,ch:myText});
 }
 $("btnSend").onclick=sendChat;
 $("chatIn").addEventListener("keydown",e=>{ if(e.key==="Enter") sendChat(); });
@@ -1290,7 +1572,7 @@ $("btnCopyCode").onclick=e=>copyText(roomCode,e.target,"Código copiado: "+roomC
 function backToLobby(){
   $("lobby").style.display="grid"; $("room").classList.remove("on"); $("log").innerHTML="";
   $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true;
-  $("apprBox").hidden=true;
+  $("apprBox").hidden=true; $("rail").innerHTML="";
 }
 $("btnLeave").onclick=()=>{
   leaving=true;
@@ -1310,7 +1592,7 @@ function teardown(reason){
   members.forEach(m=>{ try{m.conn.close();}catch(e){} }); members=[];
   if(hubConn){ try{hubConn.close();}catch(e){} hubConn=null; }
   if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  isHub=false; roster=[]; feeds.clear(); active=null;
+  isHub=false; roster=[]; feeds.clear(); active=null; myVoice=null;
   setLbl("btnScreen","Transmitir tela"); $("btnScreen").classList.remove("on");
   setLbl("btnCam","Ligar câmera"); $("btnCam").classList.remove("on");
   setLbl("btnMic","Ligar microfone"); $("btnMic").classList.remove("on");
@@ -1340,7 +1622,7 @@ function notify(title,body,tag,force){
 }
 
 /* ================= imagem no chat (Ctrl+V) ================= */
-function addImg(from, dataUrl, self){
+function addImg(from, dataUrl, self, ch){
   const w=document.createElement("div"); w.className="msg"+(self?" self":"");
   const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
   const h=hueOf(from); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
@@ -1352,7 +1634,7 @@ function addImg(from, dataUrl, self){
   const img=document.createElement("img");
   img.src=dataUrl; img.alt="imagem"; img.style.cssText="max-width:100%;border-radius:8px;margin-top:4px;cursor:zoom-in;display:block";
   img.onclick=()=>window.open(dataUrl,"_blank");
-  col.append(head,img); w.append(av,col); pushLog(w);
+  col.append(head,img); w.append(av,col); pushLog(w,ch);
 }
 async function shrink(file){
   const bmp = await createImageBitmap(file);
@@ -1369,9 +1651,9 @@ async function pasteImage(file){
   try{
     const data=await shrink(file);
     if(data.length>700000) return toast("Imagem grande demais");
-    addImg(myName(),data,true);
-    if(isHub) relay({t:"img",from:myName(),data});
-    else if(hubConn&&hubConn.open) hubConn.send({t:"img",data});
+    addImg(myName(),data,true,myText);
+    if(isHub) relay({t:"img",from:myName(),data,ch:myText});
+    else if(hubConn&&hubConn.open) hubConn.send({t:"img",data,ch:myText});
   }catch(e){ toast("Não consegui ler a imagem"); }
 }
 document.addEventListener("paste", e=>{
@@ -1552,7 +1834,7 @@ document.addEventListener("keydown", e=>{
 });
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.08.17.5";
+const VERSION="2026.08.18.1";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

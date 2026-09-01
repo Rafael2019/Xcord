@@ -1,7 +1,7 @@
-/* XCord service worker — o suficiente para instalar como app e abrir offline.
+/* Castify service worker — o suficiente para instalar como app e abrir offline.
    A página sempre tenta a rede primeiro, para o auto-update continuar funcionando.
    O cache é rede de segurança; ícones e manifest saem dele. */
-const CACHE = "xcord-shell-v11";
+const CACHE = "castify-shell-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

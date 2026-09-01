@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>XCord — sala com voz, tela e câmera</title>
+<title>Castify — sala com voz, tela e câmera</title>
 <meta name="theme-color" content="#17181B">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -12,11 +12,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#17181B;--panel:#232428;--panel-2:#2B2D31;--main:#313338;--input:#383A40;--hover:#3A3C42;
     --txt:#DBDEE1;--dim:#949BA4;--line:rgba(255,255,255,.055);
-    --accent:#FFD400;            /* identidade XCord — troque aqui se quiser outra cor */
+    --accent:#FFD400;            /* identidade Castify — troque aqui se quiser outra cor */
     --on-accent:#1A1A0F;--danger:#DA373C;--good:#23A55A;
     --body:"Inter",system-ui,-apple-system,sans-serif;
     --mono:"JetBrains Mono",ui-monospace,monospace;
@@ -315,6 +316,30 @@
   .net.bad{background:var(--danger);color:#fff}
   .diag{margin-top:10px;font:400 12px var(--mono);color:var(--dim);line-height:1.7;background:var(--input);border-radius:8px;padding:10px 12px}
   .diag b{color:var(--txt)} .diag .ok{color:var(--good)} .diag .no{color:var(--danger)} .diag .mid{color:var(--accent)}
+  .authtabs{display:flex;gap:6px;margin:0 0 16px}
+  .atab{flex:1;background:var(--input);border:0;color:var(--dim);border-radius:7px;padding:9px;font:600 13px var(--body);cursor:pointer}
+  .atab.on{background:var(--accent);color:var(--on-accent)}
+  .autherr{background:rgba(218,55,60,.14);color:#FF9A93;font-size:12.5px;border-radius:7px;padding:9px 11px;margin-bottom:12px;line-height:1.45}
+  #authView{display:grid;max-width:430px;margin:50px auto 0}
+  .mecard{display:flex;align-items:center;gap:10px;background:var(--input);border-radius:9px;padding:9px 11px;margin-bottom:15px}
+  .mecard-txt{display:grid;min-width:0}
+  .mecard-txt b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mecard-txt i{font-style:normal;font-size:11.5px;color:var(--dim)}
+  .avatar.big{width:52px;height:52px;font-size:17px}
+  .avatar{background-size:cover;background-position:center}
+
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:grid;place-items:center;z-index:50;padding:16px}
+  .sheet{background:var(--panel-2);border-radius:12px;width:min(430px,100%);overflow:hidden;max-height:92vh;overflow-y:auto}
+  .banner{height:118px;background:var(--input);background-size:cover;background-position:center;position:relative;display:grid;place-items:center}
+  .banner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .bhint{font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .sheet-body{padding:16px;display:grid;gap:12px}
+  .sheet-body .avatar.big{margin-top:-46px;box-shadow:0 0 0 4px var(--panel-2)}
+  .upl{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12.5px;color:var(--dim)}
+  .upl em{font-style:normal}
+  .upl:hover em{color:var(--accent)}
+  .upl.wide{background:var(--input);border-radius:8px;padding:10px 12px;justify-content:center}
+  .colorin{padding:4px;height:40px;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);font:600 13px var(--body);padding:11px 18px;border-radius:24px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99}
   .toast.on{opacity:1}
 </style>
@@ -323,7 +348,7 @@
 <div class="wrap">
 
   <div class="topbar">
-    <span class="brand"><em>X</em>Cord</span>
+    <span class="brand">Cast<em>ify</em></span>
     <span class="ver" id="ver"></span>
     <span class="net" id="net" hidden></span>
     <span id="roomChip" hidden class="row" style="gap:7px;margin-left:6px">
@@ -339,16 +364,52 @@
   </div>
 
   <div id="updateBar" hidden>
-    Saiu uma versão nova do XCord.
+    Saiu uma versão nova do Castify.
     <button id="btnUpdate">Atualizar agora</button>
   </div>
+
+  <!-- CONTA -->
+  <section id="authView">
+    <div class="card">
+      <h1 id="authTitle">Entrar no Castify</h1>
+      <p class="lead" id="authLead">Sua conta guarda seu nome, foto e banner em qualquer computador.</p>
+      <div class="authtabs">
+        <button class="atab on" id="tabLogin">Entrar</button>
+        <button class="atab" id="tabSignup">Criar conta</button>
+      </div>
+      <div class="field">
+        <label for="authMail">Email</label>
+        <input class="txt" id="authMail" type="email" placeholder="pode ser inventado" autocomplete="username">
+      </div>
+      <div class="field" id="userField" hidden>
+        <label for="authUser">Nome de usuário</label>
+        <input class="txt" id="authUser" maxlength="18" placeholder="como aparece na sala" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="authPass">Senha</label>
+        <input class="txt" id="authPass" type="password" placeholder="mínimo 6 caracteres" autocomplete="current-password">
+      </div>
+      <div class="autherr" id="authErr" hidden></div>
+      <button class="pill accent wide" id="btnAuth">Entrar</button>
+      <div class="or">ou</div>
+      <button class="pill wide" id="btnAnon">Entrar sem conta</button>
+    </div>
+  </section>
 
   <!-- LOBBY -->
   <section id="lobby">
     <div class="card">
       <h1>Entrar numa sala</h1>
       <p class="lead">Escolha seu apelido e entre com um código.</p>
-      <div class="field">
+      <div class="mecard" id="meCard" hidden>
+        <span class="avatar big" id="meAvatar"></span>
+        <span class="mecard-txt"><b id="meName"></b><i id="meUser"></i></span>
+        <span class="row" style="margin-left:auto;gap:6px">
+          <button class="pill small" id="btnProfile">perfil</button>
+          <button class="pill small" id="btnLogout">sair</button>
+        </span>
+      </div>
+      <div class="field" id="nickField">
         <label for="nick">Apelido</label>
         <input class="txt" id="nick" maxlength="18" placeholder="como te chamam" autocomplete="off">
       </div>
@@ -374,7 +435,7 @@
 
       <details class="adv">
         <summary>Avançado — servidor TURN</summary>
-        <p class="note">O XCord já usa um TURN público de reserva. Se estiver lento, cadastre uma chave própria em metered.ca (20 GB/mês grátis) e cole aqui. Fica salvo só neste navegador.</p>
+        <p class="note">O Castify já usa um TURN público de reserva. Se estiver lento, cadastre uma chave própria em metered.ca (20 GB/mês grátis) e cole aqui. Fica salvo só neste navegador.</p>
         <label class="check"><input type="checkbox" id="pubTurn" checked><span>Usar o TURN público de reserva</span></label>
         <label class="check"><input type="checkbox" id="forceRelay"><span>Forçar TURN <i>(só para teste — gasta relay)</i></span></label>
         <input class="txt small" id="turnUrl" placeholder="turn:host:3478" autocomplete="off">
@@ -529,6 +590,34 @@
   </section>
 
 </div>
+<div class="modal" id="profModal" hidden>
+  <div class="sheet">
+    <div class="banner" id="profBanner"><span class="bhint">banner</span></div>
+    <div class="sheet-body">
+      <label class="upl" id="uplAvatar"><span class="avatar big" id="profAvatar"></span><em>trocar foto</em><input type="file" accept="image/*" hidden id="fileAvatar"></label>
+      <label class="upl wide" id="uplBanner"><em>trocar banner (imagem, GIF ou vídeo curto)</em><input type="file" accept="image/*,video/mp4,video/webm" hidden id="fileBanner"></label>
+      <div class="field"><label for="profName">Nome de exibição</label><input class="txt" id="profName" maxlength="24"></div>
+      <div class="field"><label for="profBio">Sobre você</label><input class="txt" id="profBio" maxlength="190" placeholder="uma linha sobre você"></div>
+      <div class="field"><label for="profAccent">Cor de destaque</label><input type="color" id="profAccent" class="txt colorin"></div>
+      <div class="autherr" id="profErr" hidden></div>
+      <div class="row"><button class="pill accent" id="btnProfSave">salvar</button><button class="pill" id="btnProfClose">fechar</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="cardModal" hidden>
+  <div class="sheet">
+    <div class="banner" id="cardBanner"></div>
+    <div class="sheet-body">
+      <span class="avatar big" id="cardAvatar"></span>
+      <div><b id="cardName" style="font-size:19px"></b> <i id="cardUser" style="color:var(--dim);font-size:12.5px;font-style:normal"></i></div>
+      <p id="cardBio" style="color:var(--dim);font-size:13px;line-height:1.5;margin:2px 0 0"></p>
+      <div id="cardTags" class="row" style="gap:6px"></div>
+      <div class="row"><button class="pill" id="btnCardClose">fechar</button></div>
+    </div>
+  </div>
+</div>
+
 <div id="audios" hidden></div>
 <div class="toast" id="toast"></div>
 
@@ -544,32 +633,42 @@ const PUBLIC_TURN=[
 ];
 function iceServers(){
   const ice=[{ urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302","stun:stun.cloudflare.com:3478"] }];
-  const u=store.get("xcord.turnUrl",""), us=store.get("xcord.turnUser",""), pw=store.get("xcord.turnPass","");
+  const u=store.get("castify.turnUrl",""), us=store.get("castify.turnUser",""), pw=store.get("castify.turnPass","");
   if(u) ice.push({ urls:u, username:us||undefined, credential:pw||undefined });
-  if(store.get("xcord.pubturn","1")==="1") ice.push(...PUBLIC_TURN);
+  if(store.get("castify.pubturn","1")==="1") ice.push(...PUBLIC_TURN);
   return ice;
 }
 function peerOpts(){
   const cfg={ iceServers:iceServers() };
-  if(store.get("xcord.forcerelay","0")==="1") cfg.iceTransportPolicy="relay";
+  if(store.get("castify.forcerelay","0")==="1") cfg.iceTransportPolicy="relay";
   return { config:cfg };
 }
-const PREFIX="xcord-";
+const PREFIX="castify-";
 const CODE_CHARS="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode=()=>{ let s=""; for(let i=0;i<6;i++) s+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return s; };
 const now=()=> new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+(function migrarChaves(){                 // veio do tempo em que o app se chamava XCord
+  try{
+    if(localStorage.getItem("castify.migrated")) return;
+    Object.keys(localStorage).filter(k=>k.startsWith("xcord.")).forEach(k=>{
+      const novo="castify."+k.slice(6);
+      if(localStorage.getItem(novo)===null) localStorage.setItem(novo, localStorage.getItem(k));
+    });
+    localStorage.setItem("castify.migrated","1");
+  }catch(e){}
+})();
 const store={ get(k,d){ try{ return localStorage.getItem(k) ?? d; }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
 function setLbl(id,txt){ const b=$(id); if(b) b.title=txt; }
 function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("on"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("on"),2400); }
 function initials(n){ return n.trim().slice(0,2).toUpperCase(); }
 function hueOf(n){ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))%360; return h; }
-function myName(){ return ($("nick").value.trim()||"Anônimo").slice(0,18); }
+function myName(){ if(me) return (me.display_name||me.username).slice(0,18); return ($("nick").value.trim()||"Anônimo").slice(0,18); }
 
 /* ================= estado ================= */
 let peer=null, roomCode=null, isHub=false, hubConn=null, members=[], roster=[];
 // roster: {id,name,hub,streaming,cam,mic}
 let screenStream=null, camStream=null;
-let micOn=false, muted=false, micDeviceId=store.get("xcord.mic","");
+let micOn=false, muted=false, micDeviceId=store.get("castify.mic","");
 let outCalls=new Map();      // "kind:id" -> MediaConnection
 let feeds=new Map();         // "kind:id" -> {id,kind,name,stream,self}
 let voiceIn=new Map();       // id -> {stream,el,src,gain,an}
@@ -587,7 +686,7 @@ let history={};
 let myText="geral", myVoice=null, unreadCh={}, mentions={};
 const chName=id=>(VOICE_CH.find(c=>c.id===id)||{}).name||id;
 const isFileCh=id=>!!(TEXT_CH.find(c=>c.id===id)||{}).files;
-let vols = (()=>{ try{ return JSON.parse(store.get("xcord.vols","{}")); }catch(e){ return {}; } })();
+let vols = (()=>{ try{ return JSON.parse(store.get("castify.vols","{}")); }catch(e){ return {}; } })();
 
 /* ================= áudio: um grafo só ================= */
 let actx=null, mixDest=null, micGain=null, sfxGain=null, micSrc=null, uiGain=null, gateGain=null;
@@ -649,10 +748,10 @@ function ensureAudio(){
 }
 
 /* avisos locais (entrar/sair/mensagem) — não vão para a sala */
-let sfxOn = store.get("xcord.sfx","1")==="1";
+let sfxOn = store.get("castify.sfx","1")==="1";
 $("btnSfx").textContent = "avisos: "+(sfxOn?"on":"off");
 $("btnSfx").classList.toggle("on", sfxOn);
-$("btnSfx").onclick=()=>{ sfxOn=!sfxOn; store.set("xcord.sfx", sfxOn?"1":"0"); $("btnSfx").textContent="avisos: "+(sfxOn?"on":"off"); $("btnSfx").classList.toggle("on",sfxOn); if(sfxOn) beeps([[660,0],[880,.09]]); };
+$("btnSfx").onclick=()=>{ sfxOn=!sfxOn; store.set("castify.sfx", sfxOn?"1":"0"); $("btnSfx").textContent="avisos: "+(sfxOn?"on":"off"); $("btnSfx").classList.toggle("on",sfxOn); if(sfxOn) beeps([[660,0],[880,.09]]); };
 function beeps(notes,type="sine",vol=.14){
   if(!sfxOn) return;
   try{
@@ -709,8 +808,8 @@ function addMsg(from,text,self,ch,mid,quiet,reply){
   const w=document.createElement("div"); w.className="msg"+(self?" self":"");
   if(mid) w.id="m-"+mid;
   w.dataset.mid=mid||""; w.dataset.ch=ch;
-  const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
-  const hh=hueOf(from); av.style.background=`hsl(${42+hh%18} ${72+hh%24}% ${48+hh%22}%)`;
+  const av=document.createElement("span"); av.className="avatar";
+  { const pf=perfilDe(from); pintarAvatar(av, from, pf&&pf.prof&&pf.prof.av); av.style.cursor="pointer"; av.onclick=()=>abrirCartao(from); }
   const col=document.createElement("div"); col.className="mbody";
   if(reply && reply.text){
     const q=document.createElement("div"); q.className="quote";
@@ -797,7 +896,7 @@ function addSys(text,name,ch){
   pushLog(d,ch||"geral");
 }
 function volOf(name){ const v=vols[name]; return v===undefined?100:v; }
-function setVol(name,v){ vols[name]=v; store.set("xcord.vols", JSON.stringify(vols)); }
+function setVol(name,v){ vols[name]=v; store.set("castify.vols", JSON.stringify(vols)); }
 function applyVol(id){
   const p=roster.find(r=>r.id===id); if(!p) return;
   const v=voiceIn.get(id); if(!v) return;
@@ -1016,13 +1115,13 @@ function syncMesh(){
 }
 
 /* ================= palco: telas, câmeras e grade ================= */
-let active=null, gridMode=store.get("xcord.grid","0")==="1";
+let active=null, gridMode=store.get("castify.grid","0")==="1";
 function feedKey(kind,id){ return kind+":"+id; }
 function screenCount(){ return [...feeds.keys()].filter(k=>k.startsWith("screen:")).length; }
 function addFeed(kind,id,stream,name,self){
   feeds.set(feedKey(kind,id), {id,kind,name,stream,self:!!self});
   if(kind==="screen" && screenCount()>1 && !gridMode){       // duas telas ao mesmo tempo: mostra as duas
-    gridMode=true; store.set("xcord.grid","1"); syncGrid();
+    gridMode=true; store.set("castify.grid","1"); syncGrid();
     toast("Duas transmissões — mudei para grade");
   }
   if(kind==="screen" || !active) active=feedKey(kind,id);
@@ -1089,7 +1188,7 @@ function buildGrid(list){
     const cap=document.createElement("span"); cap.textContent=(f.self?"você":f.name)+(f.kind==="cam"?" · câmera":"");
     d.append(v,cap);
     d.title="Clique para ver só esta";
-    d.onclick=()=>{ gridMode=false; store.set("xcord.grid","0"); selectStage(k); };
+    d.onclick=()=>{ gridMode=false; store.set("castify.grid","0"); selectStage(k); };
     box.append(d); v.play().catch(()=>{});
   });
 }
@@ -1129,7 +1228,7 @@ function renderCams(){
   });
 }
 $("btnGrid").onclick=()=>{
-  gridMode=!gridMode; store.set("xcord.grid", gridMode?"1":"0");
+  gridMode=!gridMode; store.set("castify.grid", gridMode?"1":"0");
   if(feeds.size<2 && gridMode) toast("A grade aparece quando houver mais de uma transmissão");
   paintStage();
 };
@@ -1168,15 +1267,18 @@ function renderFaces(){
     const f=document.createElement("div");
     f.className="face"+(talking.has(pp.id)?" talking":"")+(self?" me":"");
     const big=document.createElement("div"); big.className="big";
-    const h=hueOf(pp.name);
     const camFeed = feeds.get("cam:"+pp.id);
     if(camFeed){
       const v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true; v.srcObject=camFeed.stream;
       big.append(v); v.play().catch(()=>{});
+    }else if(pp.prof && pp.prof.av){
+      big.style.backgroundImage=`url("${pp.prof.av}")`; big.style.backgroundSize="cover"; big.style.backgroundPosition="center";
     }else{
+      const h=hueOf(pp.name);
       big.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
       big.textContent=initials(pp.name);
     }
+    f.style.cursor="pointer"; f.onclick=()=>abrirCartao(pp.name);
     const nm=document.createElement("div"); nm.className="nm"; nm.textContent=pp.name;
     f.append(big,nm);
     const st=[]; if(pp.hub) st.push("anfitriã"); if(pp.mic) st.push("no mic"); else st.push("sem mic");
@@ -1222,12 +1324,12 @@ function saveLocalHist(){
         from:(m.querySelector(".who")||{}).textContent||"", text:(m.querySelector("p")||{}).textContent||""
       })).filter(x=>x.text);
     });
-    localStorage.setItem("xcord.hist."+roomCode, JSON.stringify(out));
+    localStorage.setItem("castify.hist."+roomCode, JSON.stringify(out));
   }catch(e){}
 }
 function loadLocalHist(){
   try{
-    const raw=localStorage.getItem("xcord.hist."+roomCode); if(!raw) return;
+    const raw=localStorage.getItem("castify.hist."+roomCode); if(!raw) return;
     const data=JSON.parse(raw);
     Object.keys(data).forEach(ch=>{
       if(!data[ch] || !data[ch].length) return;
@@ -1253,8 +1355,8 @@ function addFileMsg(from,msg,self){
     }catch(e){}
   }
   const w=document.createElement("div"); w.className="msg"+(self?" self":"");
-  const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
-  const h=hueOf(from); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+  const av=document.createElement("span"); av.className="avatar";
+  { const pf=perfilDe(from); pintarAvatar(av, from, pf&&pf.prof&&pf.prof.av); av.style.cursor="pointer"; av.onclick=()=>abrirCartao(from); }
   const col=document.createElement("div"); col.style.minWidth="0";
   const head=document.createElement("div");
   const who=document.createElement("span"); who.className="who"; who.textContent=from;
@@ -1293,9 +1395,10 @@ $("log").addEventListener("drop",e=>{
 });
 
 /* ================= entrar / sair ================= */
-$("nick").value=store.get("xcord.nick","");
-$("nick").addEventListener("input", e=> store.set("xcord.nick", e.target.value.trim()));
+$("nick").value=store.get("castify.nick","");
+$("nick").addEventListener("input", e=> store.set("castify.nick", e.target.value.trim()));
 function requireName(){
+  if(me) return true;
   if($("nick").value.trim()) return true;
   $("nick").focus(); $("nick").style.borderColor="var(--coral)"; setTimeout(()=>$("nick").style.borderColor="",1600);
   toast("Coloque um apelido primeiro"); return false;
@@ -1375,7 +1478,7 @@ function hubListen(){
       if(d.t==="state"){
         const e=roster.find(r=>r.id===m.id);
         if(e){
-          if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming;
+          if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming; if("prof" in d) e.prof=d.prof;
           if("ch" in d){
             const tgt=d.ch||null, c=tgt?chanById("voice",tgt):null;
             if(tgt && !c){ e.ch=null; try{ m.conn.send({t:"chdeny",why:"esse canal não existe mais"}); }catch(x){} }
@@ -1461,7 +1564,7 @@ function wireHub(conn, code, first){
     if(first){ addSys("entrou na sala "+code,myName()); sfx.join(); }
     else{ addSys("reconectado à sala — agora com outra anfitriã."); sfx.join(); }
     // se eu já estava com tela/câmera/mic, avisa e refaz as chamadas
-    if(screenStream||camStream||micOn) announce({streaming:!!screenStream,cam:!!camStream,mic:micOn});
+    announce({streaming:!!screenStream,cam:!!camStream,mic:micOn,prof:meuPerfilResumo()});
   });
   conn.on("data",d=>{
     if(!d||typeof d!=="object") return;
@@ -1837,7 +1940,7 @@ async function setMicSource(deviceId){
   micSrc.connect(selfAn); selfData=new Uint8Array(selfAn.frequencyBinCount);
   micGain.gain.value = muted?0:1;
   micDeviceId = s.getAudioTracks()[0].getSettings().deviceId || deviceId || "";
-  store.set("xcord.mic", micDeviceId);
+  store.set("castify.mic", micDeviceId);
   return true;
 }
 async function fillMicList(){
@@ -1948,9 +2051,9 @@ function meterTick(){
 }
 
 /* sensibilidade e push-to-talk */
-$("sens").value = store.get("xcord.sens","18");
+$("sens").value = store.get("castify.sens","18");
 $("sensNum").textContent = $("sens").value;
-$("sens").oninput = e=>{ $("sensNum").textContent=e.target.value; store.set("xcord.sens", e.target.value); };
+$("sens").oninput = e=>{ $("sensNum").textContent=e.target.value; store.set("castify.sens", e.target.value); };
 $("btnPtt").onclick = ()=>{
   ptt=!ptt;
   $("btnPtt").textContent = ptt ? "segure "+PTT_KEY.toUpperCase() : "falar sempre";
@@ -1993,7 +2096,7 @@ $("btnRec").onclick=()=>{
     sessRec.onstop=()=>{
       const blob=new Blob(sessChunks,{type:sessChunks[0]?sessChunks[0].type:"video/webm"});
       const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
-      a.download="xcord-sessao-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".webm";
+      a.download="castify-sessao-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".webm";
       a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
       const mins=Math.round((Date.now()-sessStart)/60000);
       toast("Gravação salva ("+(mins?mins+" min":"menos de 1 min")+")");
@@ -2170,7 +2273,7 @@ $("chatIn").addEventListener("keydown",e=>{ if(e.key==="Escape") clearReply(); }
 const isServed=()=> location.protocol==="http:"||location.protocol==="https:";
 const inviteText=()=> isServed()
   ? `${location.origin}${location.pathname}#${roomCode}`
-  : `Entra na minha sala do XCord: código ${roomCode} — abra o arquivo xcord.html no navegador e digite o código.`;
+  : `Entra na minha sala do Castify: código ${roomCode} — abra o Castify e digite o código.`;
 async function copyText(text,btn,label){
   try{ await navigator.clipboard.writeText(text); const o=btn.textContent; btn.textContent="Copiado"; setTimeout(()=>btn.textContent=o,1400); toast(label); }
   catch(e){ prompt("Copie manualmente:",text); }
@@ -2180,7 +2283,7 @@ $("btnCopyCode").onclick=e=>copyText(roomCode,e.target,"Código copiado: "+roomC
 
 /* ================= sair ================= */
 function backToLobby(){
-  $("lobby").style.display="grid"; $("room").classList.remove("on"); $("log").innerHTML="";
+  $("lobby").style.display="grid"; $("authView").style.display="none"; $("room").classList.remove("on"); $("log").innerHTML="";
   $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true;
   $("apprBox").hidden=true; $("rail").innerHTML="";
 }
@@ -2215,27 +2318,27 @@ window.addEventListener("beforeunload",()=>{ try{ if(peer) peer.destroy(); }catc
 
 
 /* ================= notificações do sistema ================= */
-let notifOn = store.get("xcord.notif","0")==="1";
+let notifOn = store.get("castify.notif","0")==="1";
 function syncNotifBtn(){ $("btnNotif").classList.toggle("on",notifOn); $("btnNotif").textContent = notifOn?"avisos do sistema: on":"avisos do sistema"; }
 syncNotifBtn();
 $("btnNotif").onclick=async()=>{
-  if(notifOn){ notifOn=false; store.set("xcord.notif","0"); return syncNotifBtn(); }
+  if(notifOn){ notifOn=false; store.set("castify.notif","0"); return syncNotifBtn(); }
   if(!("Notification" in window)) return toast("Este navegador não tem notificações");
   const perm = Notification.permission==="granted" ? "granted" : await Notification.requestPermission();
   if(perm!=="granted") return toast("Você bloqueou as notificações nas permissões do site");
-  notifOn=true; store.set("xcord.notif","1"); syncNotifBtn();
-  notify("XCord","Pronto — vou te avisar mesmo minimizado","test",true);
+  notifOn=true; store.set("castify.notif","1"); syncNotifBtn();
+  notify("Castify","Pronto — vou te avisar mesmo minimizado","test",true);
 };
 function notify(title,body,tag,force){
   if(!notifOn || (!force && focused())) return;
-  try{ new Notification(title,{body:String(body||"").slice(0,120), tag:tag||"xcord", icon:"icon-192.png", silent:true}); }catch(e){}
+  try{ new Notification(title,{body:String(body||"").slice(0,120), tag:tag||"castify", icon:"icon-192.png", silent:true}); }catch(e){}
 }
 
 /* ================= imagem no chat (Ctrl+V) ================= */
 function addImg(from, dataUrl, self, ch){
   const w=document.createElement("div"); w.className="msg"+(self?" self":"");
-  const av=document.createElement("span"); av.className="avatar"; av.textContent=initials(from);
-  const h=hueOf(from); av.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+  const av=document.createElement("span"); av.className="avatar";
+  { const pf=perfilDe(from); pintarAvatar(av, from, pf&&pf.prof&&pf.prof.av); av.style.cursor="pointer"; av.onclick=()=>abrirCartao(from); }
   const col=document.createElement("div"); col.style.minWidth="0";
   const head=document.createElement("div");
   const who=document.createElement("span"); who.className="who"; who.textContent=from;
@@ -2326,7 +2429,7 @@ $("btnClip").onclick=()=>{
   const blob=new Blob(clipChunks,{type:clipChunks[0].type||"video/webm"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="xcord-clipe-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".webm";
+  a.download="castify-clipe-"+new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")+".webm";
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   toast("Clipe salvo ("+clipChunks.length+"s)");
@@ -2377,7 +2480,7 @@ $("btnTestMic").onclick=async()=>{
   try{
     const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput");
     const sel=$("lobbyMic"); sel.innerHTML="";
-    const cur=store.get("xcord.mic","");
+    const cur=store.get("castify.mic","");
     devs.forEach((d,i)=>{ const o=document.createElement("option"); o.value=d.deviceId; o.textContent=d.label||("Microfone "+(i+1)); if(d.deviceId===cur) o.selected=true; sel.append(o); });
   }catch(e){}
   testCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -2395,7 +2498,7 @@ $("btnTestMic").onclick=async()=>{
   tick();
 };
 $("lobbyMic").onchange=async e=>{
-  store.set("xcord.mic", e.target.value);
+  store.set("castify.mic", e.target.value);
   micDeviceId=e.target.value;
   if(testStream){ stopTest(); $("btnTestMic").click(); }
 };
@@ -2408,21 +2511,21 @@ function stopTest(){
 }
 
 /* ================= TURN salvo pelo usuário ================= */
-$("turnUrl").value=store.get("xcord.turnUrl","");
-$("turnUser").value=store.get("xcord.turnUser","");
-$("turnPass").value=store.get("xcord.turnPass","");
+$("turnUrl").value=store.get("castify.turnUrl","");
+$("turnUser").value=store.get("castify.turnUser","");
+$("turnPass").value=store.get("castify.turnPass","");
 $("btnTurnSave").onclick=()=>{
-  store.set("xcord.turnUrl",$("turnUrl").value.trim());
-  store.set("xcord.turnUser",$("turnUser").value.trim());
-  store.set("xcord.turnPass",$("turnPass").value);
+  store.set("castify.turnUrl",$("turnUrl").value.trim());
+  store.set("castify.turnUser",$("turnUser").value.trim());
+  store.set("castify.turnPass",$("turnPass").value);
   toast($("turnUrl").value.trim()?"TURN salvo — vale na próxima sala":"TURN removido");
 };
 
 /* ================= diagnóstico de conexão ================= */
-$("pubTurn").checked = store.get("xcord.pubturn","1")==="1";
-$("forceRelay").checked = store.get("xcord.forcerelay","0")==="1";
-$("pubTurn").onchange=e=>store.set("xcord.pubturn", e.target.checked?"1":"0");
-$("forceRelay").onchange=e=>store.set("xcord.forcerelay", e.target.checked?"1":"0");
+$("pubTurn").checked = store.get("castify.pubturn","1")==="1";
+$("forceRelay").checked = store.get("castify.forcerelay","0")==="1";
+$("pubTurn").onchange=e=>store.set("castify.pubturn", e.target.checked?"1":"0");
+$("forceRelay").onchange=e=>store.set("castify.forcerelay", e.target.checked?"1":"0");
 
 function gatherICE(cfg, ms){
   return new Promise(res=>{
@@ -2468,7 +2571,7 @@ $("btnInstall").onclick=async()=>{
   if(r.outcome==="accepted") $("btnInstall").hidden=true;
   installEvt=null;
 };
-window.addEventListener("appinstalled",()=>{ $("btnInstall").hidden=true; toast("XCord instalado"); });
+window.addEventListener("appinstalled",()=>{ $("btnInstall").hidden=true; toast("Castify instalado"); });
 if("serviceWorker" in navigator && location.protocol!=="file:"){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
@@ -2641,9 +2744,9 @@ $("btnWpPlay").onclick=()=>{ if(!wp) return; const pausado=wpPaused(); wpLeader=
 $("btnWpBack").onclick=()=>{ if(!wp) return; wpLeader=myName(); const t=Math.max(0,wpTimeNow()-10); wpSeek(t,wpPaused()); sendWp({action:"state",time:t,paused:wpPaused()}); };
 $("btnWpFwd").onclick=()=>{ if(!wp) return; wpLeader=myName(); const t=wpTimeNow()+10; wpSeek(t,wpPaused()); sendWp({action:"state",time:t,paused:wpPaused()}); };
 $("btnWpSync").onclick=()=>{ if(!wp) return; sendWp({action:"ask"}); toast("Pedindo o tempo de quem está no comando"); };
-$("wpVol").value=store.get("xcord.wpvol","70");
+$("wpVol").value=store.get("castify.wpvol","70");
 $("wpVol").oninput=e=>{
-  store.set("xcord.wpvol",e.target.value);
+  store.set("castify.wpvol",e.target.value);
   try{ if(wp&&wp.mode==="yt"&&ytReady) ytPlayer.setVolume(+e.target.value); else $("wpVideo").volume=(+e.target.value)/100; }catch(err){}
 };
 setInterval(()=>{
@@ -2675,8 +2778,189 @@ if(isDesktop){
   $("ver").after(b);
 }
 
+/* ================= contas e perfil (Supabase) ================= */
+const SB_URL="https://vmzijoirtcuedbptkxtj.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtemlqb2lydGN1ZWRicHRreHRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjk1MTcsImV4cCI6MjEwMzgwNTUxN30.pt-WZrHCFTRVUP4ZgqJM2e5M5WwfE54dn40_30lW8G8";
+let sb=null, me=null;          // me = linha da tabela profiles
+try{ sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null; }catch(e){ sb=null; }
+
+function authErr(t){ const e=$("authErr"); e.hidden=!t; e.textContent=t||""; }
+let modoAuth="login";
+function setModoAuth(m){
+  modoAuth=m;
+  $("tabLogin").classList.toggle("on",m==="login");
+  $("tabSignup").classList.toggle("on",m==="signup");
+  $("userField").hidden = m!=="signup";
+  $("authTitle").textContent = m==="login"?"Entrar no Castify":"Criar sua conta";
+  $("authLead").textContent = m==="login"
+    ? "Sua conta guarda seu nome, foto e banner em qualquer computador."
+    : "O email pode ser inventado — ninguém confirma nada. Serve só para você entrar de novo.";
+  $("btnAuth").textContent = m==="login"?"Entrar":"Criar conta";
+  authErr("");
+}
+$("tabLogin").onclick=()=>setModoAuth("login");
+$("tabSignup").onclick=()=>setModoAuth("signup");
+$("btnAnon").onclick=()=>{ mostrarLobby(); };
+$("authPass").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnAuth").click(); });
+
+$("btnAuth").onclick=async()=>{
+  if(!sb) return authErr("O servidor de contas não respondeu. Você ainda pode entrar sem conta.");
+  const mail=$("authMail").value.trim(), pass=$("authPass").value;
+  if(!mail || !pass) return authErr("Preencha email e senha.");
+  if(pass.length<6) return authErr("A senha precisa de pelo menos 6 caracteres.");
+  $("btnAuth").disabled=true; authErr("");
+  try{
+    if(modoAuth==="signup"){
+      const user=$("authUser").value.trim();
+      if(user.length<2) throw new Error("Escolha um nome de usuário.");
+      const { data, error } = await sb.auth.signUp({ email:mail, password:pass });
+      if(error) throw error;
+      if(!data.session) throw new Error("A conta foi criada, mas o Supabase está pedindo confirmação por email. Desligue 'Confirm email' no painel.");
+      const { error:e2 } = await sb.from("profiles").insert({ id:data.user.id, username:user, display_name:user });
+      if(e2) throw new Error(e2.code==="23505" ? "Esse nome de usuário já existe. Tente outro." : e2.message);
+    }else{
+      const { error } = await sb.auth.signInWithPassword({ email:mail, password:pass });
+      if(error) throw new Error(error.message.includes("Invalid") ? "Email ou senha errados." : error.message);
+    }
+    await carregarPerfil();
+    mostrarLobby();
+  }catch(e){ authErr(e.message||"Não deu certo."); }
+  finally{ $("btnAuth").disabled=false; }
+};
+$("btnLogout").onclick=async()=>{
+  try{ await sb.auth.signOut(); }catch(e){}
+  me=null; pintarMe();
+  $("lobby").style.display="none"; $("authView").style.display="grid";
+};
+async function carregarPerfil(){
+  if(!sb) return null;
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) { me=null; pintarMe(); return null; }
+  const { data } = await sb.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+  me = data || { id:session.user.id, username:"sem-nome", display_name:"sem-nome", accent:"#FFD400" };
+  pintarMe();
+  return me;
+}
+function pintarMe(){
+  const on=!!me;
+  $("meCard").hidden=!on;
+  $("nickField").hidden=on;                 // com conta, o nome vem do perfil
+  if(!on) return;
+  $("meName").textContent = me.display_name||me.username;
+  $("meUser").textContent = "@"+me.username;
+  pintarAvatar($("meAvatar"), me.display_name||me.username, me.avatar_url);
+  $("nick").value = me.display_name||me.username;
+  if(me.accent) document.documentElement.style.setProperty("--accent", me.accent);
+}
+function mostrarLobby(){
+  $("authView").style.display="none";
+  $("lobby").style.display="grid";
+  if(!me) $("nick").focus();
+}
+
+/* avatar: foto quando existe, iniciais quando não */
+function pintarAvatar(el, nome, url){
+  if(!el) return;
+  if(url){ el.style.backgroundImage=`url("${url}")`; el.textContent=""; el.style.background_color=""; }
+  else{
+    el.style.backgroundImage="";
+    const h=hueOf(nome||"?");
+    el.style.background=`hsl(${42+h%18} ${72+h%24}% ${48+h%22}%)`;
+    el.textContent=initials(nome||"?");
+  }
+}
+function perfilDe(nome){ return roster.find(r=>r.name===nome) || null; }
+
+/* ---------- editar o próprio perfil ---------- */
+$("btnProfile").onclick=()=>{
+  if(!me) return;
+  $("profName").value = me.display_name||me.username;
+  $("profBio").value = me.bio||"";
+  $("profAccent").value = me.accent||"#FFD400";
+  pintarAvatar($("profAvatar"), me.display_name||me.username, me.avatar_url);
+  pintarBanner($("profBanner"), me.banner_url);
+  $("profErr").hidden=true;
+  $("profModal").hidden=false;
+};
+$("btnProfClose").onclick=()=>$("profModal").hidden=true;
+$("btnCardClose").onclick=()=>$("cardModal").hidden=true;
+[$("profModal"),$("cardModal")].forEach(m=>m.onclick=e=>{ if(e.target===m) m.hidden=true; });
+
+function pintarBanner(el, url){
+  el.innerHTML=""; el.style.backgroundImage="";
+  if(!url){ const s2=document.createElement("span"); s2.className="bhint"; s2.textContent="sem banner"; el.append(s2); return; }
+  if(/\.(mp4|webm)(\?|$)/i.test(url)){
+    const v=document.createElement("video"); v.src=url; v.autoplay=true; v.loop=true; v.muted=true; v.playsInline=true;
+    el.append(v); v.play().catch(()=>{});
+  }else{
+    el.style.backgroundImage=`url("${url}")`;
+  }
+}
+async function subirArquivo(file, tipo){
+  const ext=(file.name.split(".").pop()||"png").toLowerCase();
+  const caminho=`${me.id}/${tipo}.${ext}`;
+  const { error } = await sb.storage.from("perfis").upload(caminho, file, { upsert:true, cacheControl:"60" });
+  if(error) throw error;
+  const { data } = sb.storage.from("perfis").getPublicUrl(caminho);
+  return data.publicUrl+"?v="+Date.now();
+}
+$("fileAvatar").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f||!me) return;
+  if(f.size>3*1024*1024) return erroPerfil("Foto muito grande — use até 3 MB.");
+  try{ me.avatar_url=await subirArquivo(f,"avatar"); pintarAvatar($("profAvatar"), me.display_name, me.avatar_url); toast("Foto carregada — clique em salvar"); }
+  catch(err){ erroPerfil("Não consegui subir a foto: "+err.message); }
+};
+$("fileBanner").onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f||!me) return;
+  if(f.size>8*1024*1024) return erroPerfil("Banner muito grande — use até 8 MB. Vídeo curto em MP4 costuma ficar bem menor que GIF.");
+  try{ me.banner_url=await subirArquivo(f,"banner"); pintarBanner($("profBanner"), me.banner_url); toast("Banner carregado — clique em salvar"); }
+  catch(err){ erroPerfil("Não consegui subir o banner: "+err.message); }
+};
+function erroPerfil(t){ const e=$("profErr"); e.hidden=false; e.textContent=t; }
+$("btnProfSave").onclick=async()=>{
+  if(!me||!sb) return;
+  const patch={
+    display_name:$("profName").value.trim().slice(0,24) || me.username,
+    bio:$("profBio").value.trim().slice(0,190),
+    accent:$("profAccent").value,
+    avatar_url:me.avatar_url||null,
+    banner_url:me.banner_url||null
+  };
+  const { error } = await sb.from("profiles").update(patch).eq("id",me.id);
+  if(error) return erroPerfil(error.message);
+  Object.assign(me,patch);
+  pintarMe();
+  document.documentElement.style.setProperty("--accent", me.accent);
+  $("profModal").hidden=true;
+  toast("Perfil salvo");
+  if(peer) announce({ prof: meuPerfilResumo() }, null);   // atualiza para quem está na sala
+};
+function meuPerfilResumo(){
+  if(!me) return null;
+  return { av:me.avatar_url||null, bn:me.banner_url||null, ac:me.accent||null, bio:me.bio||null, user:me.username };
+}
+
+/* ---------- cartão de perfil de outra pessoa ---------- */
+function abrirCartao(nome){
+  const p=perfilDe(nome); if(!p) return;
+  const pr=p.prof||{};
+  pintarBanner($("cardBanner"), pr.bn);
+  pintarAvatar($("cardAvatar"), p.name, pr.av);
+  $("cardName").textContent=p.name;
+  $("cardName").style.color=pr.ac||"var(--txt)";
+  $("cardUser").textContent=pr.user?"@"+pr.user:"sem conta";
+  $("cardBio").textContent=pr.bio||"";
+  const tags=$("cardTags"); tags.innerHTML="";
+  const marca=(t)=>{ const x=document.createElement("span"); x.className="pill small"; x.textContent=t; x.style.pointerEvents="none"; tags.append(x); };
+  if(p.hub) marca("anfitriã");
+  if(p.ch) marca("em "+chName(p.ch));
+  if(p.streaming) marca("transmitindo");
+  if(p.mic) marca("no microfone");
+  $("cardModal").hidden=false;
+}
+
 /* ================= versão e atualização ================= */
-const VERSION="2026.08.31.3";
+const VERSION="2026.09.01.2";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;
@@ -2691,6 +2975,18 @@ $("btnUpdate").onclick=()=>{ location.reload(); };
 setTimeout(checkUpdate,6000);
 setInterval(checkUpdate,240000);
 window.addEventListener("focus",()=>{ if($("updateBar").hidden) checkUpdate(); });
+
+/* sessão salva: entra direto no lobby */
+(async()=>{
+  $("lobby").style.display="none";
+  setModoAuth("login");
+  try{
+    if(sb){
+      const p=await carregarPerfil();
+      if(p) mostrarLobby();
+    }
+  }catch(e){ authErr("Servidor de contas fora do ar. Dá para entrar sem conta."); }
+})();
 
 /* link #CODIGO */
 if(location.hash.length===7){

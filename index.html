@@ -574,7 +574,7 @@
   .mp-txt i{font-style:normal;font-size:10.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
   .online{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(61,214,140,.18)}
   /* todos os botões numa fileira só */
-  .mp-btns{display:flex;gap:4px;justify-content:space-between;flex-wrap:wrap;row-gap:5px}
+  .mp-btns{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;row-gap:5px}
   .ic.sm{width:27px;height:27px;border-radius:9px;flex:0 0 auto}
   .ic.sm svg{width:14px;height:14px}
   .ic.muted{background:rgba(242,84,91,.2);border-color:rgba(242,84,91,.45);color:#FF9A9E}
@@ -591,6 +591,11 @@
   #cfgModal .box{background:rgba(255,255,255,.05);box-shadow:none;backdrop-filter:none}
   #cfgModal .box::after{display:none}
   .vlab{font:600 9.5px var(--body);letter-spacing:.07em;color:var(--dim)}
+  .qual-head{font:600 10px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dimmer);margin-top:4px}
+  .qual{display:grid;gap:5px;font-size:12px;color:var(--dim)}
+  .qual-row{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 9px}
+  .qual-ok{color:var(--good);font:400 11px var(--mono)}
+  .qual-bad{color:var(--danger);font:400 11px var(--mono)}
 
   /* ---- mais gradiente dentro do app ---- */
   .box-head{background:linear-gradient(92deg, rgba(120,160,255,.1), transparent 70%)}
@@ -720,6 +725,33 @@
   #room.on .pill,#room.on .pill.accent{border-radius:7px;box-shadow:none}
   #room.on .tab{border-radius:6px;box-shadow:none}
   #room.on .wp-bar{background:var(--sur-5);border-top:1px solid var(--line-1)}
+  /* ---- player de música ---- */
+  .musicbar{position:fixed;left:0;right:0;bottom:0;z-index:44;height:68px;display:flex;align-items:center;gap:14px;
+    padding:0 14px;background:var(--sur-1);border-top:1px solid var(--line-1)}
+  .mb-thumb{width:96px;height:54px;border-radius:8px;overflow:hidden;background:#05080F;flex:none;position:relative}
+  .mb-thumb #ytmus,.mb-thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+  .mb-info{min-width:0;width:210px;display:grid}
+  .mb-info b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mb-info i{font-style:normal;font-size:11px;color:var(--dimmer);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mb-ctrl{display:flex;gap:6px;flex:none}
+  .mb-prog{flex:1;display:flex;align-items:center;gap:9px;min-width:120px}
+  .mb-time{font:400 10.5px var(--mono);color:var(--dimmer);flex:none}
+  .mb-track{flex:1;height:5px;border-radius:99px;background:rgba(255,255,255,.12);cursor:pointer;position:relative}
+  .mb-track i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--violet))}
+  .mb-right{display:flex;align-items:center;gap:9px;flex:none}
+  .mb-right input[type=range]{width:90px}
+  .mb-count{font:600 11px var(--mono);color:var(--accent-2)}
+  body[data-music="1"] #room.on{height:calc(100vh - 44px - 68px)}
+  body[data-music="1"] .footbar{margin-bottom:74px}
+  @media (max-width:900px){.mb-info,.mb-prog{display:none}}
+  .queue{display:grid;gap:6px;max-height:240px;overflow:auto}
+  .qitem{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.05);border-radius:9px;padding:8px 10px;font-size:13px}
+  .qitem .qn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qitem .qby{font-size:10.5px;color:var(--dimmer);flex:none}
+  .qitem button{background:none;border:0;color:var(--dimmer);cursor:pointer;font:700 13px var(--mono)}
+  .qitem button:hover{color:var(--danger)}
+  .qitem.now{background:rgba(76,134,255,.14);box-shadow:inset 2px 0 0 var(--accent)}
+  .mus-hint{font-size:11.5px;color:var(--dimmer)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;
     font:600 13px var(--body);padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99;
     box-shadow:0 10px 30px var(--glow)}
@@ -894,6 +926,7 @@
           <button class="ic sm" id="btnDeaf" title="Desativar áudio da sala"><svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h2.6a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M20 14h-2.6a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z"/></svg></button>
           <button class="ic sm" id="btnCam" title="Ligar câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
           <button class="ic sm" id="btnScreen" title="Transmitir tela"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/><path d="M12 16.5V20"/></svg></button>
+          <button class="ic sm" id="btnMusic" title="Música"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="16" r="2.6"/></svg></button>
           <button class="ic sm" id="btnBoard" title="Sons de zoeira"><svg viewBox="0 0 24 24"><path d="M4 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M17 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M4 14.5a8 8 0 0 1 16 0"/><path d="M9.5 20.5h5"/></svg></button>
           <button class="ic sm" id="btnWatch" title="Assistir junto"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 20.5h8"/><path d="M10.5 9.5l4.5 2.5-4.5 2.5z"/></svg></button>
           <button class="ic sm red" id="btnLeave" title="Sair da sala"><svg viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg></button>
@@ -1001,6 +1034,41 @@
     <button class="minilink" id="btnInstall" hidden>instalar app</button>
   </footer>
 </div>
+<div class="musicbar" id="musicBar" hidden>
+  <div class="mb-thumb"><div id="ytmus"></div></div>
+  <div class="mb-info">
+    <b id="musTitle">—</b>
+    <i id="musBy"></i>
+  </div>
+  <div class="mb-ctrl">
+    <button class="ic sm" id="musPlay" title="Pausar"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button>
+    <button class="ic sm" id="musSkip" title="Pular"><svg viewBox="0 0 24 24"><path d="M6 5l10 7-10 7z"/><path d="M18 5v14"/></svg></button>
+  </div>
+  <div class="mb-prog"><span class="mb-time" id="musTime">0:00</span><div class="mb-track" id="musTrack"><i id="musFill"></i></div><span class="mb-time" id="musDur">0:00</span></div>
+  <div class="mb-right">
+    <button class="ic sm" id="musMute" title="Silenciar música só para mim"><svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5"/></svg></button>
+    <input type="range" id="musVol" min="0" max="100" step="5" title="Volume da música">
+    <span class="mb-count" id="musCount"></span>
+    <button class="pill small" id="musQueueBtn">fila</button>
+    <button class="pill red small" id="musStop">parar</button>
+  </div>
+</div>
+
+<div class="modal" id="musModal" hidden>
+  <div class="sheet">
+    <div class="sheet-body">
+      <div class="cfg-head"><h3>Música</h3><button class="pill small" id="musClose">fechar</button></div>
+      <div class="field">
+        <label for="musLink">Link do YouTube</label>
+        <input class="txt" id="musLink" placeholder="cole o link e aperte Enter" autocomplete="off">
+      </div>
+      <div class="row"><button class="pill accent" id="musAdd">adicionar à fila</button><span class="mus-hint" id="musHint">quem estiver no seu canal de voz ouve junto</span></div>
+      <div class="queue" id="musQueue"></div>
+      <label class="check"><input type="checkbox" id="musDuck" checked><span>Abaixar a música quando alguém falar</span></label>
+    </div>
+  </div>
+</div>
+
 <div class="ctxmenu" id="ctxMenu" hidden>
   <div class="ctx-name" id="ctxName"></div>
   <button class="ctx-item" id="ctxProfile">Ver perfil</button>
@@ -1040,6 +1108,10 @@
             </select>
           </div>
           <div style="font-size:11.5px;color:var(--dim);line-height:1.5" id="audioHint">A barra fica verde quando você está sendo ouvido.</div>
+          <label class="check" style="margin:0"><input type="checkbox" id="optNS" checked><span>Supressão de ruído <i>(desligue se sua voz sumir em pedaços)</i></span></label>
+          <label class="check" style="margin:0"><input type="checkbox" id="optAGC" checked><span>Volume automático</span></label>
+          <div class="qual-head">Qualidade de quem você ouve</div>
+          <div class="qual" id="qualBox">—</div>
         </div>
       </div>
 
@@ -1206,7 +1278,7 @@ function setFx(kind){
 }
 const PTT_KEY="v";
 function sensVal(){ return +($("sens").value||18); }
-function threshold(){ return sensVal()*0.55; }   // 0–55 na escala de 0–255
+function threshold(){ return sensVal()*0.40; }   // mais tolerante: 0–40 na escala de 0–255
 function ensureAudio(){
   if(actx) { if(actx.state==="suspended") actx.resume(); return actx; }
   actx = new (window.AudioContext||window.webkitAudioContext)();
@@ -1580,7 +1652,8 @@ function joinVoice(id){
   syncMesh(); renderRail(); renderPeople(); pintarPainel(); sfx.join();
   voiceSince=Date.now(); ligarTimer();
   if(!micOn) ligarMic(true);          // entrar num canal já abre o microfone
-  setTimeout(()=>{ if(myVoice && !wp) sendWp({action:"ask"}); }, 900);
+  ligarQualidade();
+  setTimeout(()=>{ if(myVoice && !wp) sendWp({action:"ask"}); if(myVoice && !mus) musSend({action:"ask"}); }, 900);
 }
 function leaveVoice(){
   if(!myVoice) return;
@@ -1590,6 +1663,7 @@ function leaveVoice(){
   if(camStream) stopCam();
   if(micOn) stopMic();
   if(wp) closeWp(true);
+  if(mus) pararMus(true);
   voiceSince=0; desligarTimer();
   announce({ch:null}, "saiu de "+antigo);
   addSys("você saiu de "+antigo);
@@ -1990,6 +2064,7 @@ function hubListen(){
       if(d.t==="mreact"){ applyMReact(d.mid,d.emoji,m.name); relay({t:"mreact",mid:d.mid,emoji:d.emoji,from:m.name,ch:d.ch},m.id); }
       if(d.t==="typing"){ typingOn(m.name,d.ch); relay({t:"typing",from:m.name,ch:d.ch},m.id); }
       if(d.t==="wp"){ onWp({...d,from:m.name}); relay({...d,from:m.name},m.id); }
+      if(d.t==="mus"){ onMus({...d,from:m.name}); relay({...d,from:m.name},m.id); }
       if(d.t==="file"){
         addFileMsg(m.name,d,false); sfx.msg(); bumpUnread(); notify(m.name,"mandou "+d.name,"chat");
         relay({t:"file",from:m.name,name:d.name,mime:d.mime,size:d.size,data:d.data,ch:d.ch},m.id);
@@ -2104,6 +2179,7 @@ function wireHub(conn, code, first){
     if(d.t==="mreact") applyMReact(d.mid,d.emoji,d.from||"alguém");
     if(d.t==="typing") typingOn(d.from,d.ch);
     if(d.t==="wp") onWp(d);
+    if(d.t==="mus") onMus(d);
     if(d.t==="file"){ addFileMsg(d.from,d,false); sfx.msg(); bumpUnread(); notify(d.from,"mandou "+d.name,"chat"); }
     if(d.t==="sys"){ addSys(d.text,d.name); d.kind==="live"?sfx.live():d.kind==="leave"?sfx.leave():sfx.join(); if(d.kind==="live"||d.kind==="join") notify(d.name, d.text, "sys"); }
     if(d.t==="migrate"){ addSys("a anfitriã está saindo — a sala vai continuar."); migrate(); }
@@ -2294,6 +2370,18 @@ const FPS=30;
 function targetFps(){ return FPS; }
 async function tuneSender(call,kind){
   const pc=call.peerConnection; if(!pc) return;
+  if(kind==="voice"){                                   // voz: banda maior e prioridade de rede
+    const a=pc.getSenders().find(s=>s.track&&s.track.kind==="audio"); if(!a) return;
+    try{
+      const p=a.getParameters();
+      if(!p.encodings||!p.encodings.length) p.encodings=[{}];
+      p.encodings[0].maxBitrate=64000;
+      p.encodings[0].networkPriority="high";
+      p.encodings[0].priority="high";
+      await a.setParameters(p);
+    }catch(e){}
+    return;
+  }
   const sender=pc.getSenders().find(s=>s.track&&s.track.kind==="video"); if(!sender) return;
   try{
     const p=sender.getParameters();
@@ -2460,7 +2548,11 @@ async function setMicSource(deviceId){
   let s;
   try{
     s = await navigator.mediaDevices.getUserMedia({
-      audio: Object.assign({echoCancellation:true,noiseSuppression:true,autoGainControl:true}, deviceId?{deviceId:{exact:deviceId}}:{}),
+      audio: Object.assign({
+        echoCancellation:true,
+        noiseSuppression: $("optNS") ? $("optNS").checked : true,
+        autoGainControl: $("optAGC") ? $("optAGC").checked : true
+      }, deviceId?{deviceId:{exact:deviceId}}:{}),
       video:false
     });
   }catch(e){
@@ -2565,7 +2657,9 @@ function detachMeter(id){
   if(m){ try{ m.node.disconnect(m.an); }catch(e){} meters.delete(id); }
   if(talking.delete(id)) paintTalking();
 }
+let ultimoTick=0, meterFallback=null;
 function meterTick(){
+  ultimoTick=performance.now();
   let changed=false;
   // --- meu microfone: medidor + porta de ruído ---
   if(micOn && selfAn){
@@ -2575,8 +2669,16 @@ function meterTick(){
     let open;
     if(muted) open=false;
     else if(ptt) open = pttDown;
-    else { if(lvl>thr) lastVoiceAt=t; open = (t-lastVoiceAt) < 380; }  // segura 380ms para não picar a fala
-    if(gateGain) gateGain.gain.setTargetAtTime(open?1:0, actx.currentTime, .015);
+    else if(thr<=0.5){ open=true; lastVoiceAt=t; }                     // sensibilidade no zero = porta desligada
+    else {
+      // histerese: abre no limiar, mas só fecha bem abaixo dele.
+      // Sem isso a voz "picota" quando o volume oscila em volta do corte.
+      const aberto=(t-lastVoiceAt)<800;                                 // retenção de 800ms
+      const corte = aberto ? thr*0.55 : thr;
+      if(lvl>corte) lastVoiceAt=t;
+      open = (t-lastVoiceAt) < 800;
+    }
+    if(gateGain) gateGain.gain.setTargetAtTime(open?1:0, actx.currentTime, open?.008:.06);
     $("lvlFill").style.width = Math.min(100, lvl*2.2)+"%";
     $("lvlFill").classList.toggle("live", open);
     $("lvlMark").style.left = Math.min(100, thr*2.2)+"%";
@@ -2592,11 +2694,21 @@ function meterTick(){
     else if(!on&&talking.has(id)){ talking.delete(id); changed=true; }
   });
   if(changed) paintTalking();
+  const alguemFalando = talking.size>0;                    // abaixa a música quando alguém fala
+  if(alguemFalando!==musDucking){ musDucking=alguemFalando; aplicarVolMus(); }
   meterLoop = (meters.size || (micOn&&selfAn)) ? requestAnimationFrame(meterTick) : null;
+  if(meterLoop && !meterFallback){
+    // rede de segurança: se o rAF parar (janela coberta por jogo em tela cheia),
+    // um temporizador comum assume para o microfone não travar aberto ou fechado
+    meterFallback=setInterval(()=>{
+      if(!(meters.size || (micOn&&selfAn))){ clearInterval(meterFallback); meterFallback=null; return; }
+      if(performance.now()-ultimoTick > 300) meterTick();
+    }, 120);
+  }
 }
 
 /* sensibilidade e push-to-talk */
-$("sens").value = store.get("castify.sens","18");
+$("sens").value = store.get("castify.sens","12");
 $("sensNum").textContent = $("sens").value;
 $("sens").oninput = e=>{ $("sensNum").textContent=e.target.value; store.set("castify.sens", e.target.value); };
 $("btnPtt").onclick = ()=>{
@@ -2868,7 +2980,7 @@ function teardown(reason){
   micOn=false; muted=false; deaf=false; voiceSince=0; desligarTimer(); aplicarSurdo();
   outCalls.forEach(c=>{ try{c.close();}catch(e){} }); outCalls.clear(); stopStats();
   voiceIn.forEach((v,id)=>dropVoice(id)); voiceIn.clear();
-  meters.forEach((m,id)=>detachMeter(id)); talking.clear(); stopClipper(); stopSession(); closeWp(true); pending=[]; renderAppr(); typers={}; paintTypers(); clearReply();
+  meters.forEach((m,id)=>detachMeter(id)); talking.clear(); stopClipper(); stopSession(); closeWp(true); pararMus(true); pending=[]; renderAppr(); typers={}; paintTypers(); clearReply();
   members.forEach(m=>{ try{m.conn.close();}catch(e){} }); members=[];
   if(hubConn){ try{hubConn.close();}catch(e){} hubConn=null; }
   if(peer){ try{peer.destroy();}catch(e){} peer=null; }
@@ -3642,7 +3754,16 @@ $("ctxKick").onclick=()=>{
 };
 
 /* ================= painel do usuário ================= */
-$("btnCfg").onclick=()=>{ $("cfgModal").hidden=false; };
+$("btnCfg").onclick=()=>{ $("cfgModal").hidden=false; pintarQualidade(); };
+["optNS","optAGC"].forEach(k=>{
+  const el=$(k); if(!el) return;
+  el.checked = store.get("castify."+k,"1")==="1";
+  el.onchange=async()=>{
+    store.set("castify."+k, el.checked?"1":"0");
+    if(micOn){ await setMicSource(micDeviceId); toast("Microfone reaberto com o novo ajuste"); }
+  };
+});
+$("btnMusic").onclick=()=>{ $("musModal").hidden=false; renderFila(); setTimeout(()=>$("musLink").focus(),60); };
 $("btnBoard").onclick=()=>{ $("sfxModal").hidden=false; if(!micOn) toast("Ligue o microfone para a sala ouvir os sons"); };
 $("btnBoardClose").onclick=()=>{ $("sfxModal").hidden=true; };
 $("sfxModal").onclick=e=>{ if(e.target===$("sfxModal")) $("sfxModal").hidden=true; };
@@ -3663,8 +3784,245 @@ function pintarPainel(){
   est.append(d, document.createTextNode(txt));
 }
 
+/* ================= qualidade da voz (diagnóstico) ================= */
+const qual=new Map();          // id -> {perda, jitter, kbps}
+let qualLoop=null, qualAnt=new Map();
+function ligarQualidade(){
+  clearInterval(qualLoop);
+  qualLoop=setInterval(async()=>{
+    if(!peer || !voiceIn.size) return;
+    for(const [id] of voiceIn){
+      const call=[...outCalls.entries()].find(([k])=>k==="voice:"+id);
+      let pc=null;
+      try{ pc = call ? call[1].peerConnection : null; }catch(e){}
+      if(!pc) continue;
+      try{
+        const st=await pc.getStats();
+        st.forEach(r=>{
+          if(r.type==="inbound-rtp" && r.kind==="audio"){
+            const ant=qualAnt.get(id)||{};
+            const dPac=(r.packetsReceived||0)-(ant.rec||0);
+            const dPerd=(r.packetsLost||0)-(ant.perd||0);
+            const dBytes=(r.bytesReceived||0)-(ant.bytes||0);
+            const dt=(r.timestamp-(ant.ts||r.timestamp))/1000 || 1;
+            qual.set(id,{
+              perda: dPac+dPerd>0 ? Math.round(dPerd/(dPac+dPerd)*100) : 0,
+              jitter: Math.round((r.jitter||0)*1000),
+              kbps: Math.round(dBytes*8/1000/dt)
+            });
+            qualAnt.set(id,{rec:r.packetsReceived||0, perd:r.packetsLost||0, bytes:r.bytesReceived||0, ts:r.timestamp});
+          }
+        });
+      }catch(e){}
+    }
+    pintarQualidade();
+  }, 2500);
+}
+function pintarQualidade(){
+  const box=$("qualBox"); if(!box || $("cfgModal").hidden) return;
+  box.innerHTML="";
+  if(!qual.size){ box.textContent="ninguém falando com você agora"; return; }
+  qual.forEach((q,id)=>{
+    const p=roster.find(r=>r.id===id); if(!p) return;
+    const d=document.createElement("div"); d.className="qual-row";
+    const n=document.createElement("span"); n.textContent=p.name;
+    const v=document.createElement("span");
+    const ruim = q.perda>3 || q.jitter>40;
+    v.className = ruim ? "qual-bad" : "qual-ok";
+    v.textContent = q.perda+"% perda · "+q.jitter+"ms · "+q.kbps+" kbps";
+    d.append(n,v); box.append(d);
+  });
+}
+
+/* ================= música em conjunto ================= */
+let mus=null, musQ=[], musPlayer=null, musReady=false, musLeader="", musHb=null, musApplying=false;
+let musDucking=false, musVolAlvo=Number(store.get("castify.musvol","55"));
+
+$("musVol").value=musVolAlvo;
+$("musDuck").checked = store.get("castify.duck","1")==="1";
+$("musDuck").onchange=e=>store.set("castify.duck", e.target.checked?"1":"0");
+
+function musSend(payload){
+  const msg={t:"mus", ch:myVoice, from:myName(), ...payload};
+  if(isHub) relay(msg); else if(hubConn&&hubConn.open) hubConn.send(msg);
+}
+function musVolReal(){
+  return (musDucking && $("musDuck").checked) ? Math.round(musVolAlvo*0.28) : musVolAlvo;
+}
+function aplicarVolMus(){
+  try{ if(musReady && musPlayer) musPlayer.setVolume(musVolReal()); }catch(e){}
+  $("musMute").classList.toggle("muted", musVolAlvo===0);
+}
+$("musVol").oninput=e=>{ musVolAlvo=+e.target.value; store.set("castify.musvol",String(musVolAlvo)); aplicarVolMus(); };
+$("musMute").onclick=()=>{
+  if(musVolAlvo!==0){ store.set("castify.musvol_ant", String(musVolAlvo)); musVolAlvo=0; }
+  else musVolAlvo=Number(store.get("castify.musvol_ant","55"));
+  $("musVol").value=musVolAlvo; store.set("castify.musvol",String(musVolAlvo));
+  aplicarVolMus();
+  toast(musVolAlvo===0?"Música silenciada só para você":"Música de volta");
+};
+async function montarPlayerMus(id, segundos, pausado){
+  await loadYtApi();
+  if(musPlayer){
+    musApplying=true;
+    try{ musPlayer.loadVideoById({videoId:id, startSeconds:segundos||0}); }catch(e){}
+    setTimeout(()=>{ musApplying=false; if(pausado){ try{ musPlayer.pauseVideo(); }catch(e){} } },800);
+    return;
+  }
+  musPlayer=new YT.Player("ytmus",{
+    videoId:id,
+    playerVars:{autoplay:1,controls:0,rel:0,playsinline:1,modestbranding:1,start:Math.floor(segundos||0)},
+    events:{
+      onReady:()=>{ musReady=true; aplicarVolMus(); try{ musPlayer.playVideo(); }catch(e){} },
+      onStateChange:ev=>{
+        if(ev.data===YT.PlayerState.ENDED && musLeader===myName()) proximaMus();
+        if(!musApplying) pintarMus();
+      },
+      onError:()=>{ addSys("não consegui tocar essa música — pulando"); if(musLeader===myName()) proximaMus(); }
+    }
+  });
+}
+function musTempo(){ try{ return musReady&&musPlayer?musPlayer.getCurrentTime():0; }catch(e){ return 0; } }
+function musDuracao(){ try{ return musReady&&musPlayer?musPlayer.getDuration():0; }catch(e){ return 0; } }
+function musPausado(){ try{ return !(musReady&&musPlayer&&musPlayer.getPlayerState()===YT.PlayerState.PLAYING); }catch(e){ return true; } }
+
+async function tocarMus(item, segundos, pausado, avisar){
+  mus=item;
+  document.body.dataset.music="1";
+  $("musicBar").hidden=false;
+  $("musTitle").textContent=item.title||"carregando…";
+  $("musBy").textContent = item.by ? "pedida por "+item.by : "";
+  await montarPlayerMus(item.id, segundos||0, pausado);
+  setTimeout(()=>{
+    try{ const d=musPlayer.getVideoData(); if(d&&d.title){ item.title=d.title; $("musTitle").textContent=d.title; renderFila(); } }catch(e){}
+  },1600);
+  pintarMus(); musLeaderHb();
+  if(avisar) addSys("colocou "+(item.title||"uma música"), item.by||myName());
+}
+function proximaMus(){
+  const prox=musQ.shift();
+  if(!prox){ pararMus(false); addSys("a fila acabou"); return; }
+  musLeader=myName();
+  tocarMus(prox,0,false,true);
+  musSend({action:"load", item:prox, time:0, paused:false, queue:musQ});
+  renderFila();
+}
+function pararMus(remoto){
+  if(!remoto && mus) musSend({action:"stop"});
+  mus=null; musQ=[];
+  clearInterval(musHb); musHb=null;
+  try{ if(musPlayer) musPlayer.stopVideo(); }catch(e){}
+  $("musicBar").hidden=true;
+  delete document.body.dataset.music;
+  renderFila();
+}
+function pintarMus(){
+  const p=musPausado();
+  $("musPlay").innerHTML = p ? '<svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z"/></svg>'
+                             : '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>';
+  setLbl("musPlay", p?"Tocar":"Pausar");
+  $("musCount").textContent = musQ.length ? "+"+musQ.length : "";
+}
+function musLeaderHb(){
+  clearInterval(musHb);
+  musHb=setInterval(()=>{
+    if(!mus) return;
+    if(musLeader===myName()) musSend({action:"state", time:musTempo(), paused:musPausado(), queue:musQ});
+    const d=musDuracao(), t=musTempo();
+    $("musTime").textContent=fmtTempo(t*1000);
+    $("musDur").textContent=d?fmtTempo(d*1000):"0:00";
+    $("musFill").style.width = d ? (t/d*100)+"%" : "0%";
+  },1000);
+}
+$("musPlay").onclick=()=>{
+  if(!mus) return;
+  const pausar=!musPausado();
+  musLeader=myName(); musApplying=true;
+  try{ pausar?musPlayer.pauseVideo():musPlayer.playVideo(); }catch(e){}
+  setTimeout(()=>{ musApplying=false; pintarMus(); },400);
+  musSend({action:"state", time:musTempo(), paused:pausar, queue:musQ});
+};
+$("musSkip").onclick=()=>{ if(mus){ musLeader=myName(); proximaMus(); } };
+$("musStop").onclick=()=>{ if(mus && confirm("Parar a música para todo mundo?")) pararMus(false); };
+$("musTrack").onclick=e=>{
+  if(!mus) return;
+  const r=$("musTrack").getBoundingClientRect();
+  const alvo=((e.clientX-r.left)/r.width)*musDuracao();
+  musLeader=myName(); musApplying=true;
+  try{ musPlayer.seekTo(alvo,true); }catch(err){}
+  setTimeout(()=>musApplying=false,600);
+  musSend({action:"state", time:alvo, paused:musPausado(), queue:musQ});
+};
+$("musQueueBtn").onclick=()=>{ $("musModal").hidden=false; renderFila(); setTimeout(()=>$("musLink").focus(),60); };
+$("musClose").onclick=()=>$("musModal").hidden=true;
+$("musModal").onclick=e=>{ if(e.target===$("musModal")) $("musModal").hidden=true; };
+$("musLink").addEventListener("keydown",e=>{ if(e.key==="Enter") $("musAdd").click(); });
+$("musAdd").onclick=()=>{
+  if(!peer) return toast("Entre numa sala primeiro");
+  if(!myVoice) return toast("Entre num canal de voz para ouvir junto");
+  const id=ytId($("musLink").value);
+  if(!id) return toast("Não reconheci esse link do YouTube");
+  const item={id, title:"", by:myName()};
+  $("musLink").value="";
+  if(!mus){
+    musLeader=myName();
+    tocarMus(item,0,false,true);
+    musSend({action:"load", item, time:0, paused:false, queue:musQ});
+  }else{
+    musQ.push(item);
+    musSend({action:"queue", queue:musQ, add:item});
+    addSys("adicionou uma música à fila", myName());
+  }
+  renderFila(); pintarMus();
+};
+function renderFila(){
+  const box=$("musQueue"); if(!box) return;
+  box.innerHTML="";
+  if(mus){
+    const d=document.createElement("div"); d.className="qitem now";
+    const n=document.createElement("span"); n.className="qn"; n.textContent=mus.title||"tocando…";
+    const b=document.createElement("span"); b.className="qby"; b.textContent=mus.by||"";
+    d.append(n,b); box.append(d);
+  }
+  musQ.forEach((it,i)=>{
+    const d=document.createElement("div"); d.className="qitem";
+    const n=document.createElement("span"); n.className="qn"; n.textContent=it.title||it.id;
+    const b=document.createElement("span"); b.className="qby"; b.textContent=it.by||"";
+    const x=document.createElement("button"); x.textContent="×"; x.title="Tirar da fila";
+    x.onclick=()=>{ musQ.splice(i,1); musSend({action:"queue", queue:musQ}); renderFila(); pintarMus(); };
+    d.append(n,b,x); box.append(d);
+  });
+  if(!mus && !musQ.length){ const v=document.createElement("div"); v.className="mus-hint"; v.textContent="fila vazia"; box.append(v); }
+}
+async function onMus(d){
+  if(!d || d.ch!==myVoice) return;
+  if(d.action==="stop"){ pararMus(true); addSys("parou a música", d.from); return; }
+  if(d.action==="queue"){ musQ=d.queue||[]; renderFila(); pintarMus(); if(d.add) addSys("adicionou uma música à fila", d.from); return; }
+  if(d.action==="ask"){ if(mus && musLeader===myName()) musSend({action:"load", item:mus, time:musTempo(), paused:musPausado(), queue:musQ}); return; }
+  if(d.action==="load"){
+    musLeader=d.from||"";
+    musQ=d.queue||[];
+    const trocou = !mus || mus.id!==d.item.id;
+    await tocarMus(d.item, d.time||0, !!d.paused, trocou && d.from!==myName());
+    renderFila();
+    return;
+  }
+  if(d.action==="state" && mus){
+    musLeader=d.from||musLeader;
+    musQ=d.queue||musQ;
+    if(d.from===myName()) return;
+    const dif=Math.abs(musTempo()-(d.time||0));
+    if(dif>1.6 || musPausado()!==!!d.paused){
+      musApplying=true;
+      try{ musPlayer.seekTo(d.time||0,true); d.paused?musPlayer.pauseVideo():musPlayer.playVideo(); }catch(e){}
+      setTimeout(()=>musApplying=false,700);
+    }
+    pintarMus();
+  }
+}
+
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.02.3";
+const VERSION="2026.09.03.3";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

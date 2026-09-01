@@ -1,7 +1,7 @@
 /* Castify service worker — o suficiente para instalar como app e abrir offline.
    A página sempre tenta a rede primeiro, para o auto-update continuar funcionando.
    O cache é rede de segurança; ícones e manifest saem dele. */
-const CACHE = "castify-shell-v18";
+const CACHE = "castify-shell-v19";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

@@ -1931,8 +1931,9 @@ function enterRoom(code, criando){
   claimHub(code);
 }
 function claimHub(code){
-  peer=new Peer(PREFIX+code, peerOpts());
-  armPeer(peer);
+  const p=new Peer(PREFIX+code, peerOpts());
+  peer=p;
+  armPeer(p);
   let settled=false;
   peer.on("open",()=>{
     if(settled) return; settled=true;
@@ -1942,7 +1943,16 @@ function claimHub(code){
     addSys("sala "+code+" criada. Passe o convite para a galera."); sfx.join();
   });
   peer.on("error",err=>{
-    if(err.type==="unavailable-id" && !settled){ settled=true; try{peer.destroy();}catch(e){} joinAsGuest(code); return; }
+    // id ocupado = a sala já existe: entramos como convidada, sem alarde
+    if(err.type==="unavailable-id" && !settled){
+      settled=true;
+      p.__vivo=false;
+      try{ p.destroy(); }catch(e){}
+      clearTimeout(netTimer); setNet("wait","entrando…");
+      joinAsGuest(code);
+      return;
+    }
+    if(settled || peer!==p) return;
     handlePeerError(err);
   });
 }
@@ -2133,25 +2143,34 @@ function setNet(state,txt){
   el.className = "net"+(state==="warn"?" warn":state==="bad"?" bad":"");
   el.textContent = txt||"";
 }
-function armPeer(p){                       // vale para anfitriã e convidada
+/* Vigia quedas de conexão — mas SÓ depois que esta conexão abriu com sucesso.
+   Antes disso, "erro" é a tentativa normal de reivindicar o id da sala falhando,
+   e tratar isso como queda criava um laço infinito de reconexão. */
+function armPeer(p){
+  p.on("open", ()=>{
+    if(peer!==p) return;
+    setNet("ok",""); reconnectTries=0;
+    p.__vivo=true;                                   // a partir daqui, queda é queda de verdade
+  });
   p.on("disconnected", ()=>{
-    if(leaving || !roomCode) return;
+    if(leaving || !roomCode || !p.__vivo || peer!==p) return;
     setNet("warn","reconectando…");
-    addSys("conexão com o servidor de sinalização caiu — tentando voltar…");
-    try{ p.reconnect(); }catch(e){}
+    if(!p.__avisou){ p.__avisou=true; addSys("conexão com o servidor caiu — tentando voltar…"); }
+    try{ if(!p.destroyed) p.reconnect(); }catch(e){}
     clearTimeout(netTimer);
-    netTimer=setTimeout(()=>{                // não voltou sozinho: refaz tudo
-      if(leaving) return;
+    netTimer=setTimeout(()=>{
+      if(leaving || peer!==p) return;
       if(p.disconnected || p.destroyed) hardRejoin();
-      else setNet("ok","");
+      else { setNet("ok",""); p.__avisou=false; }
     }, 5000);
   });
-  p.on("close", ()=>{ if(!leaving && roomCode && peer===p) hardRejoin(); });
-  p.on("open", ()=>{ setNet("ok",""); reconnectTries=0; });
+  p.on("close", ()=>{ if(!leaving && roomCode && peer===p && p.__vivo) hardRejoin(); });
 }
 function hardRejoin(){
   if(leaving || !roomCode || migrating) return;
+  if(reconnectTries>8){ teardown("não consegui reconectar"); backToLobby(); return; }
   migrating=true;
+  clearTimeout(netTimer);
   reconnectTries++;
   setNet("warn","reconectando ("+reconnectTries+")…");
   const eraHub=isHub||wasHub;
@@ -2203,7 +2222,7 @@ function softReset(){   // derruba a rede, preserva tela/câmera/microfone locai
 function claimAfterFall(n){
   if(!roomCode||leaving) return;
   const p=new Peer(PREFIX+roomCode, peerOpts());
-  armPeer(p);
+  peer=p; armPeer(p);
   let done=false;
   p.on("open",()=>{
     done=true; peer=p; isHub=true; wasHub=true; migrating=false; reconnectTries=0; setNet("ok",""); stopPing();
@@ -2214,6 +2233,7 @@ function claimAfterFall(n){
   });
   p.on("error",err=>{
     if(done) return;
+    p.__vivo=false;
     try{ p.destroy(); }catch(e){}
     if(err.type==="unavailable-id"){ rejoinGuest(0); return; }   // já tem anfitriã nova
     if(n<5) setTimeout(()=>claimAfterFall(n+1),1500);
@@ -2223,7 +2243,7 @@ function claimAfterFall(n){
 function rejoinGuest(n){
   if(!roomCode||leaving) return;
   const p=new Peer(peerOpts());
-  armPeer(p);
+  peer=p; armPeer(p);
   let hooked=false;
   p.on("open",()=>{
     peer=p; listenForCalls();
@@ -2239,6 +2259,7 @@ function rejoinGuest(n){
   });
   p.on("error",err=>{
     if(hooked) return;
+    p.__vivo=false;
     try{ p.destroy(); }catch(e){}
     if(n<6) setTimeout(()=>rejoinGuest(n+1),1600);
     else { migrating=false; teardown("a sala não voltou"); }
@@ -3643,7 +3664,7 @@ function pintarPainel(){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.02.2";
+const VERSION="2026.09.02.3";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

@@ -218,7 +218,11 @@
   .chm.talking .mini{box-shadow:0 0 0 2px var(--good),0 0 12px rgba(61,214,140,.5)}
   .chm.me{color:var(--accent-2);font-weight:600}
   .mini{width:21px;height:21px;border-radius:50%;display:grid;place-items:center;font:700 8.5px var(--mono);color:#04101F;flex:none;background-size:cover;background-position:center}
-  .chm .ico{margin-left:auto;font-size:10px;opacity:.85}
+  .chm-ic{margin-left:auto;display:flex;gap:5px;align-items:center;flex:none}
+  .mk{width:13px;height:13px;stroke:var(--dim);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .mk.mk-off{stroke:var(--danger)}
+  .chtimer{margin-left:auto;font:600 11px var(--mono);color:var(--good);letter-spacing:.02em}
+  .ch .chtimer + .livedot{margin-left:6px}
 
   /* ---- palco ---- */
   .stagewrap{overflow:hidden}
@@ -406,6 +410,9 @@
   .pad{position:relative;font:600 11.5px var(--body);background:var(--glass-2);border:1px solid var(--stroke-soft);color:var(--txt);border-radius:11px;padding:12px 6px;cursor:pointer;line-height:1.25;transition:transform .12s,background .16s}
   .pad:hover{background:linear-gradient(180deg,var(--accent),#3A6FE0);border-color:transparent;color:#fff;box-shadow:0 6px 18px var(--glow)}
   .pad:active{transform:scale(.95)}
+  .pad .key{position:absolute;top:3px;left:6px;font:700 9px var(--mono);color:var(--dimmer);font-style:normal}
+  .pad:hover .key{color:rgba(255,255,255,.7)}
+  .pname2{display:block;padding:0 4px}
   .pad .del{position:absolute;top:1px;right:4px;font:700 12px var(--mono);color:var(--dimmer);background:none;border:0;cursor:pointer}
   .pad .del:hover{color:var(--danger)}
   .pads-foot{padding:0 13px 13px;font-size:11px;color:var(--dimmer);line-height:1.55}
@@ -518,14 +525,14 @@
   /* ---- layout em altura cheia ---- */
   #room.on{height:calc(100vh - 96px);min-height:560px;align-items:stretch}
   /* transmitindo: canais | palco no meio | bate-papo à direita */
-  #room.on{grid-template-columns:286px 1fr 348px;grid-template-areas:"rail stage side"}
+  #room.on{grid-template-columns:300px 1fr 348px;grid-template-areas:"rail stage side"}
   #room.on > *{min-width:0;min-height:0}
   #room.on > .railcol{grid-area:rail}
   #room.on > .stagewrap{grid-area:stage}
   #room.on > .side{grid-area:side}
   /* ninguém transmitindo: o bate-papo toma o centro inteiro, com uma faixa de voz em cima */
   /* ninguém transmitindo: só canais e bate-papo, ocupando a tela */
-  #room.on.quiet{grid-template-columns:286px 1fr;grid-template-areas:"rail side"}
+  #room.on.quiet{grid-template-columns:300px 1fr;grid-template-areas:"rail side"}
   @media (max-width:1200px){
     #room.on{grid-template-columns:268px 1fr 310px}
     #room.on.quiet{grid-template-columns:268px 1fr}
@@ -568,8 +575,8 @@
   .online{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(61,214,140,.18)}
   /* todos os botões numa fileira só */
   .mp-btns{display:flex;gap:4px;justify-content:space-between;flex-wrap:nowrap}
-  .ic.sm{width:30px;height:30px;border-radius:10px;flex:0 0 auto}
-  .ic.sm svg{width:15px;height:15px}
+  .ic.sm{width:27px;height:27px;border-radius:9px;flex:0 0 auto}
+  .ic.sm svg{width:14px;height:14px}
   .ic.muted{background:rgba(242,84,91,.2);border-color:rgba(242,84,91,.45);color:#FF9A9E}
   .ic.muted:hover{background:var(--danger);color:#fff}
   .ic.sm svg{width:16px;height:16px}
@@ -628,6 +635,84 @@
   .pane{display:grid;animation:popIn .28s cubic-bezier(.2,.8,.2,1) both}
   .backlink{justify-self:start;background:none;border:0;color:var(--dim);font:600 12px var(--body);cursor:pointer;padding:2px 0 10px}
   .backlink:hover{color:var(--accent-2)}
+
+  /* ==========================================================
+     MODO APLICATIVO — dentro da sala nada de cartão flutuante:
+     regiões contínuas separadas por tom e por linha de 1px.
+     Vidro e fundo animado ficam só no login e nos modais.
+     ========================================================== */
+  :root{
+    --sur-1:#0A0E18;
+    --sur-2:#0C111C;
+    --sur-3:#101623;
+    --sur-4:#0D131F;
+    --sur-5:#080C15;
+    --line-1:rgba(255,255,255,.07);
+  }
+  .appbar{position:sticky;top:0;z-index:45;display:flex;align-items:center;gap:14px;height:44px;padding:0 6px 0 16px;
+    background:var(--sur-1);border-bottom:1px solid var(--line-1)}
+  .ab-left,.ab-right{display:flex;align-items:center;gap:9px;min-width:0}
+  .ab-mid{flex:1;display:flex;align-items:center;gap:9px;min-width:0}
+  .ab-right{margin-left:auto}
+  .ab-brand{font-family:var(--display);font-weight:800;font-size:15.5px;color:var(--txt)}
+  .ab-room{display:flex;align-items:center;gap:8px}
+  .ab-label{font:600 9px var(--body);letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer)}
+  .ab-room b{font:700 15px var(--mono);letter-spacing:.13em;color:var(--accent-2)}
+  .ab-ch{font:600 14px var(--body);color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ab-ch:not(:empty)::before{content:"#";color:var(--dimmer);margin-right:5px;font-weight:400}
+  .appbar .ver{font:400 9.5px var(--mono);color:var(--dimmer)}
+  .tb-btns{display:flex;gap:2px}
+  .tb{width:38px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--dim);display:grid;place-items:center;cursor:pointer}
+  .tb svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round}
+  .tb:hover{background:rgba(255,255,255,.09);color:var(--txt)}
+  .tb.close:hover{background:var(--danger);color:#fff}
+
+  body[data-inroom="1"]{overflow:hidden;background:var(--sur-3)}
+  body[data-inroom="1"] .wrap{max-width:none;padding:0}
+  body[data-inroom="1"] .bg,body[data-inroom="1"] .grain{display:none}
+  body[data-inroom="1"] .footbar{display:none}
+
+  #room.on{margin:0;gap:0;height:calc(100vh - 44px)}
+  body[data-desktop="1"] #room.on{height:calc(100vh - 44px)}
+  #room.on > .railcol,#room.on > .stagewrap,#room.on > .side{
+    border-radius:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;background-image:none;border:0}
+  #room.on > .railcol::after,#room.on > .stagewrap::after,#room.on > .side::after{display:none}
+  #room.on > .railcol{background:var(--sur-2);border-right:1px solid var(--line-1);gap:0;padding:0}
+  #room.on > .stagewrap{background:var(--sur-3)}
+  #room.on > .side{background:var(--sur-4);border-left:1px solid var(--line-1);gap:0;padding:0}
+
+  #room.on .rail{background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;padding:8px 8px 12px;overflow-y:auto}
+  #room.on .rail::after{display:none}
+  #room.on .ch{border-radius:6px;padding:7px 9px;font-size:14.5px}
+  #room.on .ch.on{background:rgba(255,255,255,.08);box-shadow:none}
+  #room.on .ch.on::before{left:0;width:3px;border-radius:0 3px 3px 0}
+  #room.on .chmembers{margin-left:20px}
+
+  #room.on .mepanel{border-radius:0;box-shadow:none;backdrop-filter:none;background:var(--sur-5);
+    border:0;border-top:1px solid var(--line-1);padding:9px 10px;gap:8px}
+  #room.on .mepanel::after{display:none}
+
+  #room.on .side > .box{background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none}
+  #room.on .side > .box::after{display:none}
+  #room.on .side > #apprBox{border-bottom:1px solid var(--line-1);background:rgba(76,134,255,.06)}
+  #room.on .box-head{background:transparent;border-bottom:1px solid var(--line-1);padding:11px 14px}
+  #room.on .log{padding:10px 14px 12px;overflow-y:auto}
+  #room.on .composer{background:var(--sur-5);border-top:1px solid var(--line-1);padding:12px 14px}
+  #room.on .composer input{background:rgba(255,255,255,.05);border:1px solid transparent}
+  #room.on .composer input:focus{border-color:var(--accent);background:rgba(0,0,0,.3)}
+
+  #room.on .screen-holder{background:#05080F}
+  #room.on .tray{background:var(--sur-5);border-top:1px solid var(--line-1);padding:9px 12px}
+  #room.on .tabs{padding:9px 12px 0;background:transparent}
+  #room.on .ic{border-radius:8px;width:36px;height:36px;background:rgba(255,255,255,.06);border:1px solid transparent}
+  #room.on .ic:hover{background:rgba(255,255,255,.12)}
+  #room.on .ic.on{background:var(--accent);color:#fff;box-shadow:none}
+  #room.on .ic.muted{background:rgba(242,84,91,.22);color:#FF9A9E}
+  #room.on .ic.sm{width:30px;height:30px;border-radius:8px}
+  #room.on .ic.red{background:rgba(242,84,91,.16)}
+  #room.on .pill,#room.on .pill.accent{border-radius:7px;box-shadow:none}
+  #room.on .tab{border-radius:6px;box-shadow:none}
+  #room.on .wp-bar{background:var(--sur-5);border-top:1px solid var(--line-1)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;
     font:600 13px var(--body);padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99;
     box-shadow:0 10px 30px var(--glow)}
@@ -635,16 +720,31 @@
 </style>
 </head>
 <body data-live="0">
-<div class="titlebar" id="titlebar" hidden data-tauri-drag-region>
-  <span class="tb-name" data-tauri-drag-region>Castify</span>
-  <span class="tb-btns">
-    <button class="tb" id="tbMin" title="Minimizar"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
-    <button class="tb" id="tbMax" title="Maximizar"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg></button>
-    <button class="tb close" id="tbClose" title="Fechar"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
-  </span>
-</div>
-<div class="bg"><i></i><i></i><i></i><b class="ribbon"></b><b class="beam"></b><b class="halo"></b></div>
+
 <div class="grain"></div>
+<header class="appbar" id="appbar" data-tauri-drag-region>
+  <div class="ab-left" data-tauri-drag-region>
+    <span class="ab-brand" id="abBrand">Castify</span>
+    <span class="ab-room" id="roomChip" hidden>
+      <span class="ab-label">sala</span><b id="roomCode">······</b>
+      <button class="pill accent small" id="btnShare">convite</button>
+      <button class="pill small" id="btnCopyCode">código</button>
+    </span>
+  </div>
+  <div class="ab-mid" data-tauri-drag-region>
+    <span class="ab-ch" id="chTitle"></span>
+    <span class="badge alert" id="unread" hidden>0</span>
+  </div>
+  <div class="ab-right">
+    <span class="net" id="net" hidden></span>
+    <span class="ver" id="ver"></span>
+    <span class="tb-btns" id="titlebar" hidden>
+      <button class="tb" id="tbMin" title="Minimizar"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
+      <button class="tb" id="tbMax" title="Maximizar"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg></button>
+      <button class="tb close" id="tbClose" title="Fechar"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+    </span>
+  </div>
+</header>
 <div class="wrap">
   <div id="updateBar" hidden>
     Saiu uma versão nova do Castify.
@@ -775,13 +875,6 @@
 
     <!-- coluna 1: servidor, canais, você -->
     <div class="railcol">
-      <div class="rail-head" id="roomChip" hidden>
-        <span class="rh-top"><span class="rh-label">sala</span><b id="roomCode">······</b></span>
-        <span class="rh-actions">
-          <button class="pill accent small" id="btnShare">convite</button>
-          <button class="pill small" id="btnCopyCode">código</button>
-        </span>
-      </div>
       <nav class="rail" id="rail"></nav>
       <div class="mepanel" id="mePanel">
         <span class="mp-top">
@@ -791,6 +884,7 @@
         <span class="mp-btns">
           <button class="ic sm" id="btnMic" title="Ligar microfone"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
           <button class="ic sm" id="btnMute" title="Mudo"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v5"/><path d="M15 9v3a3 3 0 0 1-4.5 2.6"/><path d="M5 11a7 7 0 0 0 10.5 6"/><path d="M12 18v3"/><path d="M4 3l16 18"/></svg></button>
+          <button class="ic sm" id="btnDeaf" title="Desativar áudio da sala"><svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h2.6a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M20 14h-2.6a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z"/></svg></button>
           <button class="ic sm" id="btnCam" title="Ligar câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
           <button class="ic sm" id="btnScreen" title="Transmitir tela"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/><path d="M12 16.5V20"/></svg></button>
           <button class="ic sm" id="btnBoard" title="Sons de zoeira"><svg viewBox="0 0 24 24"><path d="M4 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M17 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M4 14.5a8 8 0 0 1 16 0"/><path d="M9.5 20.5h5"/></svg></button>
@@ -838,7 +932,7 @@
           <span class="vibe-code" id="vibeCode">······</span>
           <button class="pill accent small" id="btnShare2">Copiar convite</button>
         </div>
-        <div class="keys"><kbd>M</kbd> mudo <kbd>C</kbd> câmera <kbd>T</kbd> tela <kbd>G</kbd> grade <kbd>V</kbd> falar</div>
+        <div class="keys"><kbd>M</kbd> mudo <kbd>D</kbd> surdo <kbd>C</kbd> câmera <kbd>T</kbd> tela <kbd>1-9</kbd> sons</div>
       </div>
 
       <div class="screen-holder" id="holder">
@@ -861,7 +955,6 @@
         <button class="ic" id="btnFull" title="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
         <button class="ic" id="btnSound" hidden title="Ativar áudio"><svg viewBox="0 0 24 24"><path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18.8 7a7 7 0 0 1 0 10"/></svg></button>
         <span class="tray-right">
-          <span class="net" id="net" hidden></span>
           <span class="status" id="status" data-s="off"><span class="dot"></span><span class="txt">fora da sala</span></span>
           <span class="meta" id="meta"></span>
           <select class="pick" id="micPick" hidden title="Microfone"></select>
@@ -877,7 +970,6 @@
       </div>
 
       <div class="box chat-box">
-        <div class="box-head"><h4 id="chTitle">#geral</h4><span class="row"><span class="badge alert" id="unread" hidden>0</span></span></div>
         <div class="log droparea" id="log"></div>
         <div class="typing" id="typing" hidden></div>
         <div class="replybar" id="replyBar" hidden>
@@ -897,7 +989,6 @@
   </section>
 
   <footer class="footbar">
-    <span class="ver" id="ver"></span>
     <span class="fdot">·</span>
     <button class="minilink" id="btnNotif">avisos do sistema</button>
     <button class="minilink" id="btnInstall" hidden>instalar app</button>
@@ -1050,6 +1141,7 @@ let voiceIn=new Map();       // id -> {stream,el,src,gain,an}
 let talking=new Set(), meters=new Map(), meterLoop=null;
 let dragging=false, renderQueued=false, migrating=false, leaving=false;
 let roomPass="", pending=[], blocked=new Set(), clipChunks=[], clipRec=null, clipStream=null;
+let deaf=false, voiceSince=0, timerLoop=null;
 let netTimer=null, lastPong=0, pingTimer=null, reconnectTries=0, wasHub=false;
 const needAppr=()=> $("needAppr").checked;
 let TEXT_CH=[{id:"geral",name:"geral"},{id:"arquivos",name:"arquivos",files:true}];
@@ -1275,7 +1367,7 @@ function setVol(name,v){ vols[name]=v; store.set("castify.vols", JSON.stringify(
 function applyVol(id){
   const p=roster.find(r=>r.id===id); if(!p) return;
   const v=voiceIn.get(id); if(!v) return;
-  v.gain.gain.value = volOf(p.name)/100;
+  v.gain.gain.value = deaf ? 0 : volOf(p.name)/100;
 }
 
 function renderPeople(){
@@ -1375,6 +1467,10 @@ function renderRail(){
     const hs=document.createElement("span"); hs.className="hash"; hs.textContent="🔊";
     const n=document.createElement("span"); n.className="n"; n.textContent=c.name;
     b.append(hs,n);
+    if(myVoice===c.id && voiceSince){
+      const t=document.createElement("span"); t.className="chtimer"; t.id="voiceTimer";
+      t.textContent=fmtTempo(Date.now()-voiceSince); b.append(t);
+    }
     if(liveIn(c.id)){ const l=document.createElement("span"); l.className="livedot"; l.textContent="AO VIVO"; b.append(l); }
     if(c.locked){ const k=document.createElement("span"); k.className="cnt"; k.textContent="🔒"; b.append(k); }
     if(gente.length){ const q=document.createElement("span"); q.className="cnt"; q.textContent=gente.length+(c.limit?"/"+c.limit:""); b.append(q); }
@@ -1393,8 +1489,12 @@ function renderRail(){
         li.append(av,nm);
         li.oncontextmenu=ev=>{ ev.preventDefault(); abrirCtx(pp.name, ev.clientX, ev.clientY); };
         li.title="Botão direito para opções";
-        const marks=[]; if(pp.streaming) marks.push("🖥"); if(pp.cam) marks.push("📹");
-        if(marks.length){ const i=document.createElement("span"); i.className="ico"; i.textContent=marks.join(" "); li.append(i); }
+        const ic=document.createElement("span"); ic.className="chm-ic";
+        if(pp.streaming) ic.append(marcaSVG("tela"));
+        if(pp.cam) ic.append(marcaSVG("cam"));
+        if(pp.deaf) ic.append(marcaSVG("surdo"));
+        else if(!pp.mic) ic.append(marcaSVG("mudo"));
+        if(ic.children.length) li.append(ic);
         ul.append(li);
       });
       rail.append(ul);
@@ -1422,7 +1522,7 @@ function renameChan(kind,id){
   const name=(prompt("Novo nome:",c.name)||"").trim(); if(!name) return;
   const antigo=c.name;
   c.name = kind==="text"?slug(name):name.slice(0,18);
-  if(kind==="text") $("chTitle").textContent="#"+((chanById("text",myText)||{}).name||myText);
+  if(kind==="text") $("chTitle").textContent=((chanById("text",myText)||{}).name||myText);
   pushChans("renomeou "+antigo+" para "+c.name);
 }
 function delChan(kind,id){
@@ -1440,9 +1540,23 @@ function delChan(kind,id){
   }
   pushChans("apagou o canal "+c.name);
 }
+function marcaSVG(tipo){
+  const NS="http://www.w3.org/2000/svg";
+  const w=document.createElementNS(NS,"svg");
+  w.setAttribute("viewBox","0 0 24 24");
+  w.setAttribute("class","mk "+(tipo==="mudo"||tipo==="surdo"?"mk-off":""));
+  const d={
+    mudo:["M12 3a3 3 0 0 0-3 3v5","M15 9v3a3 3 0 0 1-4.5 2.6","M5 11a7 7 0 0 0 10.5 6","M12 18v3","M4 3l16 18"],
+    surdo:["M4 14v-2a8 8 0 0 1 16 0v2","M4 14h3v5H5a1 1 0 0 1-1-1z","M20 14h-3v5h2a1 1 0 0 0 1-1z","M4 3l16 18"],
+    tela:["M2.5 5h19v11h-19z","M9 20h6"],
+    cam:["M3 7h11v10H3z","M14 12l6-3.2v8.4z"]
+  }[tipo]||[];
+  d.forEach(pp=>{ const el=document.createElementNS(NS,"path"); el.setAttribute("d",pp); w.append(el); });
+  return w;
+}
 function selectText(id){
   myText=id; unreadCh[id]=0; mentions[id]=0;
-  $("chTitle").textContent="#"+((TEXT_CH.find(c=>c.id===id)||{}).name||id);
+  $("chTitle").textContent=((TEXT_CH.find(c=>c.id===id)||{}).name||id);
   TEXT_CH.forEach(c=>logEl(c.id));
   $("chatIn").placeholder = isFileCh(id) ? "Comente o arquivo (opcional)" : "Escreva uma mensagem";
   renderRail(); clearUnread(); paintTypers();
@@ -1457,6 +1571,7 @@ function joinVoice(id){
   announce({ch:id}, "entrou em "+chName(id));
   addSys("você entrou em "+chName(id));
   syncMesh(); renderRail(); renderPeople(); pintarPainel(); sfx.join();
+  voiceSince=Date.now(); ligarTimer();
   if(!micOn) ligarMic(true);          // entrar num canal já abre o microfone
   setTimeout(()=>{ if(myVoice && !wp) sendWp({action:"ask"}); }, 900);
 }
@@ -1468,6 +1583,7 @@ function leaveVoice(){
   if(camStream) stopCam();
   if(micOn) stopMic();
   if(wp) closeWp(true);
+  voiceSince=0; desligarTimer();
   announce({ch:null}, "saiu de "+antigo);
   addSys("você saiu de "+antigo);
   syncMesh(); renderRail(); renderPeople(); pintarPainel(); sfx.leave();
@@ -1803,7 +1919,7 @@ function enterRoom(code, criando){
   myVoice=null; unreadCh={}; mentions={}; myText="geral"; history={}; typers={};
   $("lobby").style.display="none"; $("room").classList.add("on"); document.body.dataset.inroom="1";
   selectText("geral"); renderRail(); paintStage(); pintarPainel(); loadLocalHist();
-  $("roomChip").hidden=false; $("btnShare").hidden=false; $("btnCopyCode").hidden=false;
+  $("roomChip").hidden=false; $("btnShare").hidden=false; $("btnCopyCode").hidden=false; $("abBrand").hidden=true;
   $("roomCode").textContent=code; setStatus("wait","entrando…");
   claimHub(code);
 }
@@ -1814,7 +1930,7 @@ function claimHub(code){
   peer.on("open",()=>{
     if(settled) return; settled=true;
     isHub=true; wasHub=true; setNet("ok","");
-    roster=[{id:peer.id,name:myName(),hub:true,streaming:false,cam:false,mic:false,ch:myVoice}];
+    roster=[{id:peer.id,name:myName(),hub:true,streaming:false,cam:false,mic:false,deaf:false,ch:myVoice,prof:meuPerfilResumo()}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("sala "+code+" criada. Passe o convite para a galera."); sfx.join();
   });
@@ -1864,7 +1980,8 @@ function hubListen(){
       if(d.t==="state"){
         const e=roster.find(r=>r.id===m.id);
         if(e){
-          if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming; if("prof" in d) e.prof=d.prof;
+          if("mic" in d) e.mic=!!d.mic; if("cam" in d) e.cam=!!d.cam; if("streaming" in d) e.streaming=!!d.streaming;
+          if("prof" in d) e.prof=d.prof; if("deaf" in d) e.deaf=!!d.deaf;
           if("ch" in d){
             const tgt=d.ch||null, c=tgt?chanById("voice",tgt):null;
             if(tgt && !c){ e.ch=null; try{ m.conn.send({t:"chdeny",why:"esse canal não existe mais"}); }catch(x){} }
@@ -1895,7 +2012,7 @@ function admit(m){
   m.pending=false;
   pending=pending.filter(x=>x!==m);
   renderAppr();
-  if(!roster.find(r=>r.id===m.id)) roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false,ch:null});
+  if(!roster.find(r=>r.id===m.id)) roster.push({id:m.id,name:m.name,hub:false,streaming:false,cam:false,mic:false,deaf:false,ch:null,prof:m.prof||null});
   try{ m.conn.send({t:"admitted"}); m.conn.send({t:"hist",data:history,chans:{text:TEXT_CH,voice:VOICE_CH}}); }catch(e){}
   renderPeople(); syncRoster();
   addSys("entrou na sala",m.name); relay({t:"sys",name:m.name,text:"entrou na sala",kind:"join"}); sfx.join();
@@ -1959,7 +2076,7 @@ function wireHub(conn, code, first){
       if(d.chans){ TEXT_CH=d.chans.text; VOICE_CH=d.chans.voice;
         if(!chanById("text",myText)) myText=TEXT_CH[0].id;
         if(myVoice && !chanById("voice",myVoice)){ myVoice=null; }
-        $("chTitle").textContent="#"+((chanById("text",myText)||{}).name||myText);
+        $("chTitle").textContent=((chanById("text",myText)||{}).name||myText);
       }
       renderPeople(); renderRail(); voiceIn.forEach((v,id)=>applyVol(id));
       syncMesh();
@@ -2083,7 +2200,7 @@ function claimAfterFall(n){
   let done=false;
   p.on("open",()=>{
     done=true; peer=p; isHub=true; wasHub=true; migrating=false; reconnectTries=0; setNet("ok",""); stopPing();
-    roster=[{id:peer.id,name:myName(),hub:true,streaming:!!screenStream,cam:!!camStream,mic:micOn,ch:myVoice}];
+    roster=[{id:peer.id,name:myName(),hub:true,streaming:!!screenStream,cam:!!camStream,mic:micOn&&!muted,deaf,ch:myVoice,prof:meuPerfilResumo()}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("você virou a anfitriã da sala "+roomCode+". Quem estava dentro volta em alguns segundos.");
     sfx.live();
@@ -2552,8 +2669,9 @@ $("fileSfx").onchange=async e=>{
       const buf=await actx.decodeAudioData(ab.slice(0));
       const name=f.name.replace(/\.[^.]+$/,"").slice(0,16);
       const id="u"+Date.now()+Math.floor(Math.random()*999);
-      userSounds.push({id,name,buffer:buf});
-      try{ await idbPut({id,name,blob:new Blob([ab],{type:f.type||"audio/mpeg"})}); }
+      const blob=new Blob([ab],{type:f.type||"audio/mpeg"});
+      userSounds.push({id,name,buffer:buf,blob});
+      try{ await idbPut({id,name,blob}); }
       catch(err){ idbOk=false; }
     }catch(err){ toast("Não consegui ler "+f.name); }
   }
@@ -2566,7 +2684,7 @@ async function loadUserSounds(){
     const recs=await idbAll();
     ensureAudio();
     for(const r of recs){
-      try{ const buf=await actx.decodeAudioData(await r.blob.arrayBuffer()); userSounds.push({id:r.id,name:r.name,buffer:buf}); }catch(e){}
+      try{ const buf=await actx.decodeAudioData(await r.blob.arrayBuffer()); userSounds.push({id:r.id,name:r.name,buffer:buf,blob:r.blob}); }catch(e){}
     }
     renderPads();
   }catch(e){ idbOk=false; }
@@ -2579,20 +2697,40 @@ function playBuffer(buf){
   s.start(0,0,Math.min(10,buf.duration));   // teto de 10 segundos
 }
 function playBuiltin(b){ ensureAudio(); b.play(actx.currentTime+.02); }
+function tocarPad(i){
+  const lista=[...userSounds, ...BUILTIN];          // seus sons primeiro: são os que você usa
+  const item=lista[i]; if(!item) return;
+  if(item.buffer) playBuffer(item.buffer); else playBuiltin(item);
+  if(!micOn) toast("Ligue o microfone para a sala ouvir");
+}
 function renderPads(){
   const box=$("pads"); box.innerHTML="";
-  BUILTIN.forEach(b=>{
-    const el=document.createElement("button"); el.className="pad"; el.textContent=b.name;
-    el.onclick=()=>{ playBuiltin(b); if(!micOn) toast("Ligue o microfone para a sala ouvir"); };
+  const lista=[...userSounds, ...BUILTIN];
+  lista.forEach((u,i)=>{
+    const el=document.createElement("button"); el.className="pad";
+    const nm=document.createElement("span"); nm.className="pname2"; nm.textContent=u.name;
+    el.append(nm);
+    if(i<9){ const k=document.createElement("i"); k.className="key"; k.textContent=i+1; el.append(k); }
+    el.onclick=()=>tocarPad(i);
+    if(u.buffer){                                   // som seu: dá para renomear e apagar
+      el.title="Clique para tocar · botão direito para renomear";
+      el.oncontextmenu=async ev=>{
+        ev.preventDefault();
+        const novo=(prompt("Nome do som:", u.name)||"").trim().slice(0,16);
+        if(!novo) return;
+        u.name=novo;
+        try{ await idbPut({id:u.id,name:novo,blob:u.blob}); }catch(e){}
+        renderPads();
+      };
+      const del=document.createElement("button"); del.className="del"; del.textContent="×"; del.title="Remover";
+      del.onclick=async ev=>{ ev.stopPropagation(); userSounds=userSounds.filter(x=>x.id!==u.id); try{ await idbDel(u.id); }catch(e){} renderPads(); };
+      el.append(del);
+    }
     box.append(el);
   });
-  userSounds.forEach(u=>{
-    const el=document.createElement("button"); el.className="pad"; el.textContent=u.name;
-    el.onclick=()=>{ playBuffer(u.buffer); if(!micOn) toast("Ligue o microfone para a sala ouvir"); };
-    const del=document.createElement("button"); del.className="del"; del.textContent="×"; del.title="Remover";
-    del.onclick=async ev=>{ ev.stopPropagation(); userSounds=userSounds.filter(x=>x.id!==u.id); try{ await idbDel(u.id); }catch(e){} renderPads(); };
-    el.append(del); box.append(el);
-  });
+  $("padsFoot").textContent = idbOk
+    ? "Teclas 1 a 9 disparam os primeiros. Botão direito num som seu renomeia. Máximo de 10 segundos."
+    : "Aqui os sons valem só nesta sessão — o navegador bloqueia salvar quando o arquivo é aberto do disco.";
 }
 renderPads(); loadUserSounds();
 
@@ -2685,7 +2823,7 @@ $("btnCopyCode").onclick=e=>copyText(roomCode,e.target,"Código copiado: "+roomC
 function backToLobby(){
   delete document.body.dataset.inroom;
   $("lobby").style.display="grid"; $("authView").style.display="none"; $("room").classList.remove("on"); $("log").innerHTML="";
-  $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true;
+  $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true; $("abBrand").hidden=false; $("chTitle").textContent="";
   $("apprBox").hidden=true; $("rail").innerHTML="";
 }
 $("btnLeave").onclick=()=>{
@@ -2699,7 +2837,7 @@ function teardown(reason){
   [screenStream,camStream,window._micRaw].forEach(s=>{ if(s) s.getTracks().forEach(t=>t.stop()); });
   screenStream=camStream=null; window._micRaw=null;
   if(micSrc){ try{micSrc.disconnect();}catch(e){} micSrc=null; }
-  micOn=false; muted=false;
+  micOn=false; muted=false; deaf=false; voiceSince=0; desligarTimer(); aplicarSurdo();
   outCalls.forEach(c=>{ try{c.close();}catch(e){} }); outCalls.clear(); stopStats();
   voiceIn.forEach((v,id)=>dropVoice(id)); voiceIn.clear();
   meters.forEach((m,id)=>detachMeter(id)); talking.clear(); stopClipper(); stopSession(); closeWp(true); pending=[]; renderAppr(); typers={}; paintTypers(); clearReply();
@@ -2982,7 +3120,9 @@ document.addEventListener("keydown", e=>{
   if(!peer || e.ctrlKey || e.altKey || e.metaKey) return;
   const t=e.target;
   if(t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT")) return;
+  if(e.key>="1" && e.key<="9"){ tocarPad(parseInt(e.key)-1); return; }
   const k=e.key.toLowerCase();
+  if(k==="d"){ $("btnDeaf").click(); return; }
   if(k==="c"){ $("btnCam").click(); }
   else if(k==="t"){ $("btnScreen").click(); }
   else if(k==="g"){ $("btnGrid").click(); }
@@ -3175,6 +3315,7 @@ if(isDesktop){
   listen("toggle-mute", ()=>{ if(micOn) $("btnMute").click(); }).catch(()=>{});
   $("btnInstall").hidden=true;
   $("titlebar").hidden=false;
+  document.body.dataset.desktop="1";
   try{
     const w = window.__TAURI__.window.getCurrentWindow();
     $("tbMin").onclick=()=>w.minimize();
@@ -3392,6 +3533,36 @@ function abrirCartao(nome){
   $("cardModal").hidden=false;
 }
 
+/* ================= áudio desativado (não ouço ninguém) ================= */
+$("btnDeaf").onclick=()=>{
+  deaf=!deaf;
+  aplicarSurdo();
+  if(deaf && micOn && !muted){ muted=true; if(micGain) micGain.gain.value=0; }
+  pintarMudo(); pintarPainel();
+  announce({deaf, mic: micOn && !muted}, deaf?"desativou o áudio":"reativou o áudio");
+  toast(deaf?"Áudio da sala desativado":"Áudio da sala de volta");
+};
+function aplicarSurdo(){
+  $("btnDeaf").classList.toggle("muted", deaf);
+  setLbl("btnDeaf", deaf?"Reativar áudio da sala":"Desativar áudio da sala");
+  voiceIn.forEach((v,id)=>applyVol(id));
+  const sv=$("stageVideo"); if(sv && deaf) sv.muted=true;
+}
+
+/* ================= tempo em chamada ================= */
+function fmtTempo(ms){
+  const t=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s2=t%60;
+  return (h?h+":"+String(m).padStart(2,"0"):String(m))+":"+String(s2).padStart(2,"0");
+}
+function tickTempo(){
+  const el=document.getElementById("voiceTimer");
+  if(el) el.textContent = voiceSince ? fmtTempo(Date.now()-voiceSince) : "";
+  pintarPainel();
+}
+function ligarTimer(){ clearInterval(timerLoop); timerLoop=setInterval(tickTempo,1000); tickTempo(); }
+function desligarTimer(){ clearInterval(timerLoop); timerLoop=null; }
+
 /* ================= menu do botão direito na pessoa ================= */
 let ctxAlvo=null;
 function abrirCtx(nome, x, y){
@@ -3457,13 +3628,15 @@ function pintarPainel(){
   const d=document.createElement("span"); d.className="online";
   if(myVoice) d.style.background="var(--accent)";
   let txt = myVoice ? "em "+chName(myVoice) : (peer?"na sala":"online");
-  if(micOn && muted){ txt += " · no mudo"; d.style.background="var(--danger)"; }
+  if(myVoice && voiceSince) txt += " · "+fmtTempo(Date.now()-voiceSince);
+  if(deaf){ txt += " · surdo"; d.style.background="var(--danger)"; }
+  else if(micOn && muted){ txt += " · no mudo"; d.style.background="var(--danger)"; }
   else if(micOn){ d.style.background="var(--good)"; }
   est.append(d, document.createTextNode(txt));
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.01.15";
+const VERSION="2026.09.02.1";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

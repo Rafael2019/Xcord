@@ -310,6 +310,11 @@
   .wp-bar{display:flex;align-items:center;gap:7px;padding:9px 11px;background:var(--panel-2);flex-wrap:wrap}
   .wp-time{font:400 11.5px var(--mono);color:var(--dim)}
   .wp-who{font-size:11.5px;color:var(--accent);font-weight:600}
+  .net{font:700 10px var(--body);letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:3px 9px}
+  .net.warn{background:var(--accent);color:var(--on-accent);animation:recblink 1.2s ease-in-out infinite}
+  .net.bad{background:var(--danger);color:#fff}
+  .diag{margin-top:10px;font:400 12px var(--mono);color:var(--dim);line-height:1.7;background:var(--input);border-radius:8px;padding:10px 12px}
+  .diag b{color:var(--txt)} .diag .ok{color:var(--good)} .diag .no{color:var(--danger)} .diag .mid{color:var(--accent)}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);font:600 13px var(--body);padding:11px 18px;border-radius:24px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99}
   .toast.on{opacity:1}
 </style>
@@ -320,6 +325,7 @@
   <div class="topbar">
     <span class="brand"><em>X</em>Cord</span>
     <span class="ver" id="ver"></span>
+    <span class="net" id="net" hidden></span>
     <span id="roomChip" hidden class="row" style="gap:7px;margin-left:6px">
       <span style="color:var(--dim);font-size:13px">sala</span>
       <b style="font:700 17px var(--mono);letter-spacing:.12em;color:var(--accent)" id="roomCode">······</b>
@@ -368,13 +374,19 @@
 
       <details class="adv">
         <summary>Avançado — servidor TURN</summary>
-        <p class="note">Use se alguém não conseguir conectar (4G, NAT restrito). Fica salvo só neste navegador.</p>
+        <p class="note">O XCord já usa um TURN público de reserva. Se estiver lento, cadastre uma chave própria em metered.ca (20 GB/mês grátis) e cole aqui. Fica salvo só neste navegador.</p>
+        <label class="check"><input type="checkbox" id="pubTurn" checked><span>Usar o TURN público de reserva</span></label>
+        <label class="check"><input type="checkbox" id="forceRelay"><span>Forçar TURN <i>(só para teste — gasta relay)</i></span></label>
         <input class="txt small" id="turnUrl" placeholder="turn:host:3478" autocomplete="off">
         <div class="row" style="margin-top:6px">
           <input class="txt small" id="turnUser" placeholder="usuário" autocomplete="off" style="flex:1">
           <input class="txt small" id="turnPass" placeholder="senha" type="password" autocomplete="off" style="flex:1">
         </div>
-        <button class="pill small" id="btnTurnSave" style="margin-top:8px">salvar TURN</button>
+        <div class="row" style="margin-top:8px">
+          <button class="pill small" id="btnTurnSave">salvar TURN</button>
+          <button class="pill accent small" id="btnDiag">testar conexão</button>
+        </div>
+        <div class="diag" id="diag" hidden></div>
       </details>
     </div>
   </section>
@@ -449,10 +461,6 @@
         <span class="tray-right">
           <span class="status" id="status" data-s="off"><span class="dot"></span><span class="txt">fora da sala</span></span>
           <span class="meta" id="meta"></span>
-          <select class="pick" id="quality" title="Qualidade">
-            <option value="60">60 fps · jogo</option>
-            <option value="30">30 fps · leitura</option>
-          </select>
           <select class="pick" id="micPick" hidden title="Microfone"></select>
           <button class="ic red" id="btnLeave" title="Sair da sala"><svg viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h9"/></svg></button>
         </span>
@@ -526,11 +534,25 @@
 
 <script>
 const $ = id => document.getElementById(id);
-function peerOpts(){
-  const ice=[{ urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"] }];
+/* TURN público do Open Relay — rede de segurança quando o P2P direto não fecha.
+   É compartilhado com o mundo inteiro, então pode ficar lento; para uso sério, cadastre
+   uma chave própria (20 GB/mês grátis) e cole nos campos do lobby. */
+const PUBLIC_TURN=[
+  { urls:"turn:openrelay.metered.ca:80", username:"openrelayproject", credential:"openrelayproject" },
+  { urls:"turn:openrelay.metered.ca:443", username:"openrelayproject", credential:"openrelayproject" },
+  { urls:"turn:openrelay.metered.ca:443?transport=tcp", username:"openrelayproject", credential:"openrelayproject" }
+];
+function iceServers(){
+  const ice=[{ urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302","stun:stun.cloudflare.com:3478"] }];
   const u=store.get("xcord.turnUrl",""), us=store.get("xcord.turnUser",""), pw=store.get("xcord.turnPass","");
   if(u) ice.push({ urls:u, username:us||undefined, credential:pw||undefined });
-  return { config:{ iceServers:ice } };
+  if(store.get("xcord.pubturn","1")==="1") ice.push(...PUBLIC_TURN);
+  return ice;
+}
+function peerOpts(){
+  const cfg={ iceServers:iceServers() };
+  if(store.get("xcord.forcerelay","0")==="1") cfg.iceTransportPolicy="relay";
+  return { config:cfg };
 }
 const PREFIX="xcord-";
 const CODE_CHARS="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -554,6 +576,7 @@ let voiceIn=new Map();       // id -> {stream,el,src,gain,an}
 let talking=new Set(), meters=new Map(), meterLoop=null;
 let dragging=false, renderQueued=false, migrating=false, leaving=false;
 let roomPass="", pending=[], blocked=new Set(), clipChunks=[], clipRec=null, clipStream=null;
+let netTimer=null, lastPong=0, pingTimer=null, reconnectTries=0, wasHub=false;
 const needAppr=()=> $("needAppr").checked;
 let TEXT_CH=[{id:"geral",name:"geral"},{id:"arquivos",name:"arquivos",files:true}];
 let VOICE_CH=[{id:"conversa",name:"Conversa",limit:0,locked:false},{id:"jogatina",name:"Jogatina",limit:0,locked:false},{id:"afk",name:"AFK",limit:0,locked:false}];
@@ -1283,7 +1306,7 @@ $("codeIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnEnter").cl
 $("nick").addEventListener("keydown",e=>{ if(e.key==="Enter") $("codeIn").focus(); });
 
 function enterRoom(code){
-  leaving=false; migrating=false; roomPass=$("passIn").value.trim(); blocked=new Set(); pending=[]; renderAppr();
+  leaving=false; migrating=false; wasHub=false; reconnectTries=0; setNet("ok",""); roomPass=$("passIn").value.trim(); blocked=new Set(); pending=[]; renderAppr();
   code=String(code||"").trim().toUpperCase();
   if(code.length!==6) return toast("O código tem 6 caracteres");
   roomCode=code;
@@ -1297,10 +1320,11 @@ function enterRoom(code){
 }
 function claimHub(code){
   peer=new Peer(PREFIX+code, peerOpts());
+  armPeer(peer);
   let settled=false;
   peer.on("open",()=>{
     if(settled) return; settled=true;
-    isHub=true;
+    isHub=true; wasHub=true; setNet("ok","");
     roster=[{id:peer.id,name:myName(),hub:true,streaming:false,cam:false,mic:false,ch:myVoice}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("sala "+code+" criada. Passe o convite para a galera."); sfx.join();
@@ -1316,6 +1340,7 @@ function hubListen(){
     members.push(m);
     conn.on("data",d=>{
       if(!d||typeof d!=="object") return;
+      if(d.t==="ping"){ m.seen=Date.now(); try{ conn.send({t:"pong"}); }catch(e){} }
       if(d.t==="peek"){                                   // quem está no lobby só quer saber quem tem dentro
         try{ conn.send({t:"peekres", count:roster.length, names:roster.map(r=>r.name).slice(0,4), locked:!!roomPass, appr:needAppr()}); }catch(e){}
       }
@@ -1331,6 +1356,7 @@ function hubListen(){
         addImg(m.name, d.data, false, d.ch); sfx.msg(); bumpUnread(); notify(m.name, "mandou uma imagem", "chat");
         relay({t:"img",from:m.name,data:d.data,ch:d.ch},m.id);
       }
+      m.seen=Date.now();
       if(d.t==="chat"){
         const text=String(d.text||"").slice(0,500); if(!text) return;
         addMsg(m.name,text,false,d.ch,d.mid,false,d.reply); sfx.msg(); bumpUnread(); notify(m.name,text,"chat"); typingOff(m.name);
@@ -1417,6 +1443,7 @@ function syncRoster(){ relay({t:"roster",list:roster,chans:{text:TEXT_CH,voice:V
 
 function joinAsGuest(code){
   peer=new Peer(peerOpts());
+  armPeer(peer);
   peer.on("open",()=>{
     listenForCalls();
     hubConn=peer.connect(PREFIX+code,{reliable:true});
@@ -1429,6 +1456,7 @@ function wireHub(conn, code, first){
   conn.on("open",()=>{
     migrating=false;
     conn.send({t:"hello",name:myName(),pass:$("passIn").value});
+    wasHub=false; reconnectTries=0; setNet("ok",""); startPing();
     enableChat(true); setStatus("wait","na sala");
     if(first){ addSys("entrou na sala "+code,myName()); sfx.join(); }
     else{ addSys("reconectado à sala — agora com outra anfitriã."); sfx.join(); }
@@ -1461,6 +1489,7 @@ function wireHub(conn, code, first){
       if(d.chans){ TEXT_CH=d.chans.text; VOICE_CH=d.chans.voice; renderRail(); }
       applyHistory(d.data);
     }
+    if(d.t==="pong"){ lastPong=Date.now(); setNet("ok",""); }
     if(d.t==="waiting"){ setStatus("wait","aguardando aprovação"); addSys("a anfitriã precisa aprovar sua entrada…"); }
     if(d.t==="admitted"){ setStatus("wait","na sala"); addSys("entrada aprovada."); sfx.live(); }
     if(d.t==="denied"){
@@ -1472,6 +1501,69 @@ function wireHub(conn, code, first){
   });
   conn.on("close",()=>{ if(!leaving) migrate(); });
 }
+
+/* a anfitriã derruba quem parou de dar sinal de vida */
+setInterval(()=>{
+  if(!isHub) return;
+  const agora=Date.now();
+  members.slice().forEach(m=>{
+    if(m.pending) return;
+    if(!m.seen) m.seen=agora;
+    if(agora-m.seen > 40000){ addSys("caiu da sala",m.name||"alguém"); dropMember(m); }
+  });
+}, 12000);
+
+/* ---------- estado da conexão e reconexão ---------- */
+function setNet(state,txt){
+  const el=$("net");
+  el.hidden = state==="ok";
+  el.className = "net"+(state==="warn"?" warn":state==="bad"?" bad":"");
+  el.textContent = txt||"";
+}
+function armPeer(p){                       // vale para anfitriã e convidada
+  p.on("disconnected", ()=>{
+    if(leaving || !roomCode) return;
+    setNet("warn","reconectando…");
+    addSys("conexão com o servidor de sinalização caiu — tentando voltar…");
+    try{ p.reconnect(); }catch(e){}
+    clearTimeout(netTimer);
+    netTimer=setTimeout(()=>{                // não voltou sozinho: refaz tudo
+      if(leaving) return;
+      if(p.disconnected || p.destroyed) hardRejoin();
+      else setNet("ok","");
+    }, 5000);
+  });
+  p.on("close", ()=>{ if(!leaving && roomCode && peer===p) hardRejoin(); });
+  p.on("open", ()=>{ setNet("ok",""); reconnectTries=0; });
+}
+function hardRejoin(){
+  if(leaving || !roomCode || migrating) return;
+  migrating=true;
+  reconnectTries++;
+  setNet("warn","reconectando ("+reconnectTries+")…");
+  const eraHub=isHub||wasHub;
+  softReset();
+  const espera=Math.min(8000, 600*reconnectTries);
+  setTimeout(()=>{ eraHub ? claimAfterFall(0) : rejoinGuest(0); }, espera);
+}
+/* batimento: descobre conexão morta que o navegador ainda acha viva */
+function startPing(){
+  clearInterval(pingTimer);
+  lastPong=Date.now();
+  pingTimer=setInterval(()=>{
+    if(leaving || isHub || !hubConn) return;
+    try{ hubConn.send({t:"ping"}); }catch(e){}
+    if(Date.now()-lastPong > 26000){
+      addSys("a sala parou de responder — reconectando…");
+      hardRejoin();
+    }else if(Date.now()-lastPong > 14000){
+      setNet("warn","conexão instável");
+    }
+  }, 7000);
+}
+function stopPing(){ clearInterval(pingTimer); pingTimer=null; }
+window.addEventListener("offline", ()=>{ if(roomCode) setNet("bad","sem internet"); });
+window.addEventListener("online", ()=>{ if(roomCode && !leaving){ setNet("warn","voltando…"); hardRejoin(); } });
 
 /* ---------- eleição de anfitriã ---------- */
 function migrate(){
@@ -1493,14 +1585,15 @@ function softReset(){   // derruba a rede, preserva tela/câmera/microfone locai
   members.forEach(m=>{ try{m.conn.close();}catch(e){} }); members=[];
   if(hubConn){ try{hubConn.close();}catch(e){} hubConn=null; }
   if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  isHub=false; roster=[]; renderPeople();
+  stopPing(); isHub=false; roster=[]; renderPeople();
 }
 function claimAfterFall(n){
   if(!roomCode||leaving) return;
   const p=new Peer(PREFIX+roomCode, peerOpts());
+  armPeer(p);
   let done=false;
   p.on("open",()=>{
-    done=true; peer=p; isHub=true; migrating=false;
+    done=true; peer=p; isHub=true; wasHub=true; migrating=false; reconnectTries=0; setNet("ok",""); stopPing();
     roster=[{id:peer.id,name:myName(),hub:true,streaming:!!screenStream,cam:!!camStream,mic:micOn,ch:myVoice}];
     renderPeople(); enableChat(true); listenForCalls(); hubListen();
     addSys("você virou a anfitriã da sala "+roomCode+". Quem estava dentro volta em alguns segundos.");
@@ -1517,6 +1610,7 @@ function claimAfterFall(n){
 function rejoinGuest(n){
   if(!roomCode||leaving) return;
   const p=new Peer(peerOpts());
+  armPeer(p);
   let hooked=false;
   p.on("open",()=>{
     peer=p; listenForCalls();
@@ -1562,7 +1656,8 @@ function listenForCalls(){
     call.on("error",()=>removeFeed(kind,call.peer));
   });
 }
-function targetFps(){ return +($("quality").value||60); }
+const FPS=30;
+function targetFps(){ return FPS; }
 async function tuneSender(call,kind){
   const pc=call.peerConnection; if(!pc) return;
   const sender=pc.getSenders().find(s=>s.track&&s.track.kind==="video"); if(!sender) return;
@@ -1570,9 +1665,9 @@ async function tuneSender(call,kind){
     const p=sender.getParameters();
     if(!p.encodings||!p.encodings.length) p.encodings=[{}];
     if(kind==="screen"){
-      p.encodings[0].maxBitrate = targetFps()>=60 ? 8000000 : 4000000;
-      p.encodings[0].maxFramerate = targetFps();
-      p.degradationPreference = "maintain-framerate";   // prefere baixar resolução a perder quadros
+      p.encodings[0].maxBitrate = 6000000;              // banda cheia para 30fps = imagem mais limpa
+      p.encodings[0].maxFramerate = FPS;
+      p.degradationPreference = "maintain-resolution";  // quando aperta, perde quadro em vez de nitidez
     }else{
       p.encodings[0].maxBitrate = 1200000;
       p.encodings[0].maxFramerate = 24;
@@ -1588,6 +1683,22 @@ function callPeer(kind,id,stream){
     outCalls.set(feedKey(kind,id),call);
     setTimeout(()=>tuneSender(call,kind),600);
     setTimeout(()=>tuneSender(call,kind),2500);
+    setTimeout(()=>{                                  // se o ICE falhar, refaz a chamada uma vez
+      const pc=call.peerConnection; if(!pc) return;
+      pc.oniceconnectionstatechange=()=>{
+        if(pc.iceConnectionState!=="failed" && pc.iceConnectionState!=="disconnected") return;
+        setTimeout(()=>{
+          if(!outCalls.has(feedKey(kind,id))) return;
+          if(pc.iceConnectionState==="connected"||pc.iceConnectionState==="completed") return;
+          try{ call.close(); }catch(e){}
+          outCalls.delete(feedKey(kind,id));
+          if(sameVoice(id)){
+            const st = kind==="screen"?screenStream : kind==="cam"?camStream : (micOn?mixDest.stream:null);
+            if(st){ addSys("refazendo a conexão de mídia…"); callPeer(kind,id,st); }
+          }
+        }, 3000);
+      };
+    }, 1200);
     call.on("close",()=>outCalls.delete(feedKey(kind,id)));
     call.on("error",()=>outCalls.delete(feedKey(kind,id)));
   }catch(e){}
@@ -1621,7 +1732,7 @@ $("btnScreen").onclick=async()=>{
   }catch(e){ toast("A captura não começou"); return; }
   const vt=screenStream.getVideoTracks()[0];
   // "motion" diz ao codec para preservar fluidez em vez de nitidez — sem isso o WebRTC derruba o fps
-  vt.contentHint = fps>=60 ? "motion" : "detail";
+  vt.contentHint = "detail";
   startStats();
   setLbl("btnScreen","Parar tela"); $("btnScreen").classList.add("on");
   addFeed("screen",peer.id,screenStream,myName(),true);
@@ -1640,14 +1751,6 @@ function stopScreen(){
   addSys("parou de transmitir",myName()); sfx.leave();
 }
 
-$("quality").onchange=async()=>{
-  if(!screenStream) return;
-  const fps=targetFps(), vt=screenStream.getVideoTracks()[0];
-  try{ await vt.applyConstraints({frameRate:{ideal:fps,max:fps}}); }catch(e){}
-  vt.contentHint = fps>=60 ? "motion" : "detail";
-  outCalls.forEach((c,k)=>{ if(k.startsWith("screen:")) tuneSender(c,"screen"); });
-  toast("Transmissão em "+fps+" fps");
-};
 
 /* medidor real de saída: fps e banda que estão de fato saindo */
 let statsTimer=null, lastBytes=0, lastAt=0;
@@ -1853,7 +1956,7 @@ $("btnPtt").onclick = ()=>{
   $("btnPtt").textContent = ptt ? "segure "+PTT_KEY.toUpperCase() : "falar sempre";
   $("btnPtt").classList.toggle("on", ptt);
   $("audioHint").textContent = ptt
-    ? "Segure "+PTT_KEY.toUpperCase()+" para falar. Só funciona com esta janela em foco."
+    ? (isDesktop ? "Segure F8 para falar — funciona fora da janela também." : "Segure "+PTT_KEY.toUpperCase()+" para falar. Só funciona com esta janela em foco.")
     : "A barra acende quando você está sendo ouvido. Suba a sensibilidade até o ruído do quarto parar de passar.";
 };
 function typing(e){ const t=e.target; return t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.tagName==="SELECT"); }
@@ -2099,7 +2202,7 @@ function teardown(reason){
   members.forEach(m=>{ try{m.conn.close();}catch(e){} }); members=[];
   if(hubConn){ try{hubConn.close();}catch(e){} hubConn=null; }
   if(peer){ try{peer.destroy();}catch(e){} peer=null; }
-  isHub=false; roster=[]; feeds.clear(); active=null; myVoice=null;
+  isHub=false; roster=[]; feeds.clear(); active=null; myVoice=null; stopPing(); clearTimeout(netTimer); setNet("ok","");
   setLbl("btnScreen","Transmitir tela"); $("btnScreen").classList.remove("on");
   setLbl("btnCam","Ligar câmera"); $("btnCam").classList.remove("on");
   setLbl("btnMic","Ligar microfone"); $("btnMic").classList.remove("on");
@@ -2315,6 +2418,47 @@ $("btnTurnSave").onclick=()=>{
   toast($("turnUrl").value.trim()?"TURN salvo — vale na próxima sala":"TURN removido");
 };
 
+/* ================= diagnóstico de conexão ================= */
+$("pubTurn").checked = store.get("xcord.pubturn","1")==="1";
+$("forceRelay").checked = store.get("xcord.forcerelay","0")==="1";
+$("pubTurn").onchange=e=>store.set("xcord.pubturn", e.target.checked?"1":"0");
+$("forceRelay").onchange=e=>store.set("xcord.forcerelay", e.target.checked?"1":"0");
+
+function gatherICE(cfg, ms){
+  return new Promise(res=>{
+    const found={host:0,srflx:0,relay:0};
+    let pc;
+    try{ pc=new RTCPeerConnection(cfg); }catch(e){ return res(found); }
+    pc.createDataChannel("t");
+    pc.onicecandidate=e=>{
+      if(!e.candidate) return;
+      const t=(e.candidate.candidate.match(/ typ (\w+)/)||[])[1];
+      if(t && found[t]!==undefined) found[t]++;
+    };
+    pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(()=>{});
+    setTimeout(()=>{ try{ pc.close(); }catch(e){} res(found); }, ms||6000);
+  });
+}
+$("btnDiag").onclick=async()=>{
+  const box=$("diag"); box.hidden=false;
+  box.innerHTML="<b>Testando…</b> pode levar uns 8 segundos.";
+  const stunOnly={iceServers:[{urls:["stun:stun.l.google.com:19302"]}]};
+  const full={iceServers:iceServers()};
+  const relayOnly={iceServers:iceServers(), iceTransportPolicy:"relay"};
+  const a=await gatherICE(stunOnly,5000);
+  const b=await gatherICE(relayOnly,7000);
+  const linha=(rot,ok,txt)=>`<div>${rot}: <span class="${ok}">${txt}</span></div>`;
+  let out="";
+  out+=linha("Rede local", a.host?"ok":"no", a.host?"ok ("+a.host+" candidatos)":"nenhum candidato — navegador bloqueado?");
+  out+=linha("STUN (IP público)", a.srflx?"ok":"no", a.srflx?"ok — descobriu seu IP externo":"falhou — firewall bloqueando UDP");
+  out+=linha("TURN (relay)", b.relay?"ok":"no", b.relay?"ok — dá para conectar mesmo em NAT restrito":"falhou — sem relay disponível");
+  if(a.srflx && b.relay) out+='<div class="ok"><b>Tudo certo.</b> Conexão direta com reserva de relay.</div>';
+  else if(a.srflx) out+='<div class="mid"><b>Parcial.</b> Conexão direta funciona, mas sem relay: pode falhar com quem estiver em 4G ou rede corporativa.</div>';
+  else if(b.relay) out+='<div class="mid"><b>Parcial.</b> Sem STUN, mas o relay salva — vai conectar, com um pouco mais de latência.</div>';
+  else out+='<div class="no"><b>Ruim.</b> Nem STUN nem TURN passaram. Cheque firewall, VPN ou antivírus com proteção de rede.</div>';
+  box.innerHTML=out;
+};
+
 /* ================= PWA ================= */
 let installEvt=null;
 window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); installEvt=e; $("btnInstall").hidden=false; });
@@ -2509,8 +2653,30 @@ setInterval(()=>{
   $("btnWpPlay").textContent=wpPaused()?"▶︎":"❚❚";
 },1000);
 
+/* ================= ponte com o app desktop (Tauri) ================= */
+const isDesktop = !!(window.__TAURI__ && window.__TAURI__.event);
+if(isDesktop){
+  document.body.dataset.desktop="1";
+  const { listen } = window.__TAURI__.event;
+  listen("ptt", e=>{                       // F8 funciona mesmo com o jogo em tela cheia
+    const down = !!e.payload;
+    pttDown = down;
+    if(down && !ptt){                      // primeira vez: liga o modo push-to-talk sozinho
+      ptt=true;
+      $("btnPtt").textContent="segure F8";
+      $("btnPtt").classList.add("on");
+      $("audioHint").textContent="Push-to-talk global: segure F8 em qualquer lugar, até com o jogo em tela cheia.";
+    }
+  }).catch(()=>{});
+  listen("toggle-mute", ()=>{ if(micOn) $("btnMute").click(); }).catch(()=>{});
+  $("btnInstall").hidden=true;
+  const b=document.createElement("span");
+  b.className="ver"; b.textContent="app · F8 falar · F9 mudo";
+  $("ver").after(b);
+}
+
 /* ================= versão e atualização ================= */
-const VERSION="2026.08.18.3";
+const VERSION="2026.08.31.3";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

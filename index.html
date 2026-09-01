@@ -44,26 +44,28 @@
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
-  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--body);font-size:15px}
-  body{min-height:100vh;position:relative;overflow-x:hidden}
+  html{background:var(--bg)}
+  html,body{margin:0;color:var(--txt);font-family:var(--body);font-size:15px}
+  /* body transparente de propósito: com fundo aqui, as camadas atrás ficam invisíveis */
+  body{min-height:100vh;position:relative;overflow-x:hidden;background:transparent;isolation:isolate}
 
   /* ---- brilhos de fundo ---- */
-  .bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
       background:radial-gradient(120% 90% at 50% -10%, #101a35 0%, var(--bg-2) 45%, var(--bg) 100%)}
   .bg i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.55}
   .bg i:nth-child(1){width:40vw;height:40vw;left:-12vw;top:-16vw;background:#2F63FF;opacity:.3}
   .bg i:nth-child(2){width:30vw;height:30vw;right:-8vw;top:0;background:#6C4CFF;opacity:.24}
   .bg i:nth-child(3){display:none}
   /* esfera de partículas: fica atrás do cartão de login e é o que o vidro distorce */
-  #orb{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;
+  #orb{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;
     opacity:0;transition:opacity 1.2s ease-out}
   #orb.on{opacity:1}
   body[data-inroom="1"] #orb{opacity:0}
-  .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.16;
+  .grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.16;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
   @media (max-width:820px){.bg i{filter:blur(60px)}}
 
-  .wrap{max-width:1380px;margin:0 auto;padding:16px 16px 40px}
+  .wrap{position:relative;z-index:3;max-width:1380px;margin:0 auto;padding:16px 16px 40px}
   ::-webkit-scrollbar{width:8px;height:8px}
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.09);border-radius:8px}
   ::-webkit-scrollbar-track{background:transparent}
@@ -110,6 +112,8 @@
 
   /* ---- entrada ---- */
   #authView{display:grid;max-width:430px;margin:6vh auto 0;position:relative;z-index:1}
+  /* a esfera precisa aparecer através do cartão, então ele não pode ser opaco */
+  #authView .card,#lobby .card{background:linear-gradient(150deg, rgba(255,255,255,.10), rgba(255,255,255,.03) 46%, rgba(255,255,255,.05))}
   #lobby{display:grid;max-width:470px;margin:5vh auto 0;position:relative;z-index:1}
   .card{padding:28px}
   .card h1{font-family:var(--display);font-size:27px;margin:0 0 6px;letter-spacing:-.02em}
@@ -479,7 +483,7 @@
   .minilink.on{color:var(--accent-2)}
   .minilink.on::before{content:"● ";font-size:8px;vertical-align:1px}
   /* ---- layout em altura cheia ---- */
-  #room.on{height:calc(100vh - 92px);min-height:560px}
+  #room.on{height:calc(100vh - 96px);min-height:560px;align-items:stretch}
   /* transmitindo: canais | palco no meio | bate-papo à direita */
   #room.on{grid-template-columns:252px 1fr 348px;grid-template-areas:"rail stage side"}
   #room.on > .railcol{grid-area:rail}
@@ -501,12 +505,16 @@
   .stagewrap{max-height:100%;overflow:auto;display:flex;flex-direction:column}
   .stagewrap .screen-holder{flex:0 0 auto}
   .stagewrap .tray{margin-top:auto}
-  .side{display:grid;grid-template-rows:auto 1fr;gap:12px;height:100%;min-height:0}
-  #room.on .side > .box.chat-box{display:flex;flex-direction:column;min-height:0}
-  .chat-box .log{height:auto;flex:1;min-height:120px}
+  /* flex em vez de grid: a caixa escondida de "querem entrar" não rouba mais a altura */
+  .side{display:flex;flex-direction:column;gap:12px;height:100%;min-height:0}
+  .side > #apprBox{flex:0 0 auto}
+  .side > .chat-box{flex:1 1 auto;min-height:0}
+  .chat-box{display:flex;flex-direction:column;min-height:0}
+  .chat-box .log{height:auto;flex:1 1 auto;min-height:120px}
+  .chat-box .composer{flex:0 0 auto}
   @media (max-width:1000px){
-    .side{grid-template-rows:auto auto}
-    .chat-box .log{height:300px;flex:none}
+    .side{height:auto}
+    .chat-box .log{height:320px;flex:none}
   }
 
   /* ---- painel do usuário ---- */
@@ -538,7 +546,7 @@
   .tray{background:linear-gradient(0deg, rgba(120,160,255,.09), transparent)}
   .composer{background:linear-gradient(0deg, rgba(120,160,255,.09), rgba(0,0,0,.2))}
   /* ---- barra de janela do app (sem moldura do Windows) ---- */
-  .titlebar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;height:34px;padding:0 6px 0 14px;
+  .titlebar{position:relative;z-index:40;display:flex;align-items:center;gap:10px;height:34px;padding:0 6px 0 14px;
     -webkit-app-region:drag;background:linear-gradient(180deg, rgba(10,14,26,.72), rgba(10,14,26,.2));
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   .tb-name{font:600 11.5px var(--body);letter-spacing:.06em;color:var(--dimmer);pointer-events:none}
@@ -548,7 +556,7 @@
   .tb:hover{background:rgba(255,255,255,.1);color:var(--txt)}
   .tb.close:hover{background:var(--danger);color:#fff}
   body[data-desktop="1"] .wrap{padding-top:8px}
-  body[data-desktop="1"] #room.on{height:calc(100vh - 126px)}
+  body[data-desktop="1"] #room.on{height:calc(100vh - 130px)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;
     font:600 13px var(--body);padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99;
     box-shadow:0 10px 30px var(--glow)}
@@ -584,8 +592,6 @@
 <path d="M243.039 193.828H258.97L251.005 204.449L243.039 193.828Z" fill="currentColor"/>
 </svg></div>
     <div class="card">
-      <h1 id="authTitle">Crie sua conta</h1>
-      <p class="lead" id="authLead">Sua conta guarda seu nome, foto e banner em qualquer computador.</p>
       <div class="authtabs">
         <button class="atab on" id="tabLogin">Entrar</button>
         <button class="atab" id="tabSignup">Criar conta</button>
@@ -3060,10 +3066,6 @@ function setModoAuth(m){
   $("tabLogin").classList.toggle("on",m==="login");
   $("tabSignup").classList.toggle("on",m==="signup");
   $("userField").hidden = m!=="signup";
-  $("authTitle").textContent = m==="login"?"Entrar no Castify":"Crie sua conta";
-  $("authLead").textContent = m==="login"
-    ? "Entre para acessar suas salas com seu perfil."
-    : "Sua conta guarda seu nome, foto e banner em qualquer computador.";
   $("btnAuth").textContent = m==="login"?"Entrar":"Criar conta";
   authErr("");
 }
@@ -3342,7 +3344,7 @@ function pintarPainel(){
 })();
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.01.9";
+const VERSION="2026.09.01.11";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

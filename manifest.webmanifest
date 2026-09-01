@@ -1,13 +1,13 @@
 {
-  "name": "XCord",
-  "short_name": "XCord",
+  "name": "Castify",
+  "short_name": "Castify",
   "description": "Sala com bate-papo, voz, transmissão de tela e câmera, direto entre as máquinas.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#17181B",
-  "theme_color": "#17181B",
+  "background_color": "#080B14",
+  "theme_color": "#080B14",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },

@@ -57,7 +57,7 @@
   .bg i:nth-child(2){width:30vw;height:30vw;right:-8vw;top:0;background:#6C4CFF;opacity:.24}
   .bg i:nth-child(3){display:none}
   /* esfera de partículas: fica atrás do cartão de login e é o que o vidro distorce */
-  #orb{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);z-index:1;pointer-events:none;
+  #orb{position:fixed;left:50%;bottom:-24vh;transform:translateX(-50%);z-index:1;pointer-events:none;
     opacity:0;transition:opacity 1.2s ease-out}
   #orb.on{opacity:1}
   body[data-inroom="1"] #orb{opacity:0}
@@ -112,8 +112,12 @@
 
   /* ---- entrada ---- */
   #authView{display:grid;max-width:430px;margin:6vh auto 0;position:relative;z-index:1}
-  /* a esfera precisa aparecer através do cartão, então ele não pode ser opaco */
-  #authView .card,#lobby .card{background:linear-gradient(150deg, rgba(255,255,255,.10), rgba(255,255,255,.03) 46%, rgba(255,255,255,.05))}
+  /* cartão de entrada bem translúcido: é assim que a esfera aparece através dele */
+  #authView .card,#lobby .card{
+    background:linear-gradient(150deg, rgba(255,255,255,.07), rgba(255,255,255,.015) 50%, rgba(255,255,255,.04));
+    backdrop-filter:saturate(140%) blur(13px);-webkit-backdrop-filter:saturate(140%) blur(13px);
+    box-shadow:0 24px 60px rgba(2,6,18,.5), inset 0 1px 0 rgba(255,255,255,.2)}
+  #authView input.txt,#lobby input.txt{background:rgba(4,8,18,.42)}
   #lobby{display:grid;max-width:470px;margin:5vh auto 0;position:relative;z-index:1}
   .card{padding:28px}
   .card h1{font-family:var(--display);font-size:27px;margin:0 0 6px;letter-spacing:-.02em}
@@ -502,9 +506,13 @@
   }
   .railcol{display:grid;grid-template-rows:auto 1fr auto;gap:12px;height:100%;min-height:0}
   .rail{overflow-y:auto;min-height:0}
-  .stagewrap{max-height:100%;overflow:auto;display:flex;flex-direction:column}
-  .stagewrap .screen-holder{flex:0 0 auto}
-  .stagewrap .tray{margin-top:auto}
+  .stagewrap{max-height:100%;overflow:hidden;display:flex;flex-direction:column}
+  .stagewrap .screen-holder{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0}
+  .stagewrap video#stageVideo{width:100%;height:100%;max-height:none;object-fit:contain}
+  .stagewrap #gridBox{width:100%;max-height:100%;overflow:auto}
+  .stagewrap .tray{flex:0 0 auto}
+  .stagewrap #wpBox{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+  .stagewrap .wp-stagearea{flex:1 1 auto;aspect-ratio:auto;min-height:0}
   /* flex em vez de grid: a caixa escondida de "querem entrar" não rouba mais a altura */
   .side{display:flex;flex-direction:column;gap:12px;height:100%;min-height:0}
   .side > #apprBox{flex:0 0 auto}
@@ -557,6 +565,27 @@
   .tb.close:hover{background:var(--danger);color:#fff}
   body[data-desktop="1"] .wrap{padding-top:8px}
   body[data-desktop="1"] #room.on{height:calc(100vh - 130px)}
+  /* ---- menu do botão direito ---- */
+  .ctxmenu{position:fixed;z-index:60;min-width:216px;padding:6px;border-radius:13px;
+    background:rgba(14,19,34,.92);backdrop-filter:saturate(160%) blur(20px);-webkit-backdrop-filter:saturate(160%) blur(20px);
+    border:1px solid var(--stroke);box-shadow:0 20px 50px rgba(0,0,0,.6);
+    animation:sheetIn .16s cubic-bezier(.2,.8,.2,1)}
+  .ctx-name{font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--dimmer);padding:7px 10px 6px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ctx-item{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--txt);
+    font:500 13.5px var(--body);text-align:left;padding:8px 10px;border-radius:9px;cursor:pointer}
+  .ctx-item:hover{background:rgba(255,255,255,.09)}
+  .ctx-item.danger{color:#FF9A9E}
+  .ctx-item.danger:hover{background:rgba(242,84,91,.18)}
+  .ctx-item.toggle{justify-content:space-between}
+  .ctx-item .sw{width:32px;height:18px;border-radius:99px;background:rgba(255,255,255,.14);position:relative;flex:none;transition:background .18s}
+  .ctx-item .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .18s}
+  .ctx-item .sw.on{background:var(--accent)}
+  .ctx-item .sw.on::after{transform:translateX(14px)}
+  .ctx-sep{height:1px;background:var(--stroke-soft);margin:5px 8px}
+  .ctx-vol{padding:6px 11px 10px;display:grid;gap:7px}
+  .ctx-vlab{font:600 11px var(--body);color:var(--dim);display:flex;justify-content:space-between}
+  .ctx-vlab b{color:var(--accent-2)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;
     font:600 13px var(--body);padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99;
     box-shadow:0 10px 30px var(--glow)}
@@ -815,6 +844,20 @@
     <button class="minilink" id="btnInstall" hidden>instalar app</button>
   </footer>
 </div>
+<div class="ctxmenu" id="ctxMenu" hidden>
+  <div class="ctx-name" id="ctxName"></div>
+  <button class="ctx-item" id="ctxProfile">Ver perfil</button>
+  <button class="ctx-item" id="ctxMention">Mencionar</button>
+  <div class="ctx-sep"></div>
+  <div class="ctx-vol">
+    <span class="ctx-vlab">Volume <b id="ctxVolNum">100%</b></span>
+    <input type="range" id="ctxVol" min="0" max="200" step="5" value="100">
+  </div>
+  <button class="ctx-item toggle" id="ctxMute"><span>Silenciar para mim</span><i class="sw" id="ctxMuteSw"></i></button>
+  <div class="ctx-sep" id="ctxHostSep" hidden></div>
+  <button class="ctx-item danger" id="ctxKick" hidden>Expulsar da sala</button>
+</div>
+
 <div class="modal" id="cfgModal" hidden>
   <div class="sheet">
     <div class="sheet-body">
@@ -1073,7 +1116,7 @@ function addMsg(from,text,self,ch,mid,quiet,reply){
   if(mid) w.id="m-"+mid;
   w.dataset.mid=mid||""; w.dataset.ch=ch;
   const av=document.createElement("span"); av.className="avatar";
-  { const pf=perfilDe(from); pintarAvatar(av, from, pf&&pf.prof&&pf.prof.av); av.style.cursor="pointer"; av.onclick=()=>abrirCartao(from); }
+  { const pf=perfilDe(from); pintarAvatar(av, from, pf&&pf.prof&&pf.prof.av); av.style.cursor="pointer"; av.onclick=()=>abrirCartao(from); av.oncontextmenu=ev=>{ ev.preventDefault(); abrirCtx(from, ev.clientX, ev.clientY); }; }
   const col=document.createElement("div"); col.className="mbody";
   if(reply && reply.text){
     const q=document.createElement("div"); q.className="quote";
@@ -1280,6 +1323,8 @@ function renderRail(){
         const h=hueOf(pp.name); av.style.background=`linear-gradient(150deg, hsl(${205+h%70} ${58+h%22}% ${58+h%12}%), hsl(${218+h%60} ${52+h%20}% ${42+h%10}%))`;
         const nm=document.createElement("span"); nm.textContent=pp.name;
         li.append(av,nm);
+        li.oncontextmenu=ev=>{ ev.preventDefault(); abrirCtx(pp.name, ev.clientX, ev.clientY); };
+        li.title="Botão direito para opções";
         const marks=[]; if(pp.streaming) marks.push("🖥"); if(pp.cam) marks.push("📹");
         if(marks.length){ const i=document.createElement("span"); i.className="ico"; i.textContent=marks.join(" "); li.append(i); }
         ul.append(li);
@@ -1536,14 +1581,11 @@ function renderFaces(){
     if(camFeed){
       const v=document.createElement("video"); v.autoplay=true; v.playsInline=true; v.muted=true; v.srcObject=camFeed.stream;
       big.append(v); v.play().catch(()=>{});
-    }else if(pp.prof && pp.prof.av){
-      big.style.backgroundImage=`url("${pp.prof.av}")`; big.style.backgroundSize="cover"; big.style.backgroundPosition="center";
     }else{
-      const h=hueOf(pp.name);
-      big.style.background=`linear-gradient(150deg, hsl(${205+h%70} ${58+h%22}% ${58+h%12}%), hsl(${218+h%60} ${52+h%20}% ${42+h%10}%))`;
-      big.textContent=initials(pp.name);
+      pintarAvatar(big, pp.name, pp.prof && pp.prof.av);
     }
     f.style.cursor="pointer"; f.onclick=()=>abrirCartao(pp.name);
+    f.oncontextmenu=ev=>{ ev.preventDefault(); abrirCtx(pp.name, ev.clientX, ev.clientY); };
     const nm=document.createElement("div"); nm.className="nm"; nm.textContent=pp.name;
     f.append(big,nm);
     const st=[]; if(pp.hub) st.push("anfitriã"); if(pp.mic) st.push("no mic"); else st.push("sem mic");
@@ -3136,15 +3178,37 @@ function mostrarLobby(){
   if(!me) $("nick").focus();
 }
 
-/* avatar: foto quando existe, iniciais quando não */
+/* avatar padrão: o gatinho branco sobre uma cor sorteada pelo nome */
+const CAT_FACE="M171.34 92.9375L211.168 132.766C237.72 127.455 264.272 127.455 290.824 132.766L330.652 92.9375C348.353 146.042 343.928 187.64 317.376 217.732C273.123 240.744 228.869 240.744 184.616 217.732C158.064 187.64 153.638 146.042 171.34 92.9375Z";
+const CAT_EYE1="M213.829 181.877C223.361 181.877 231.088 174.15 231.088 164.618C231.088 155.086 223.361 147.359 213.829 147.359C204.297 147.359 196.57 155.086 196.57 164.618C196.57 174.15 204.297 181.877 213.829 181.877Z";
+const CAT_EYE2="M288.173 181.877C297.705 181.877 305.432 174.15 305.432 164.618C305.432 155.086 297.705 147.359 288.173 147.359C278.641 147.359 270.914 155.086 270.914 164.618C270.914 174.15 278.641 181.877 288.173 181.877Z";
+const CAT_NOSE="M243.039 193.828H258.97L251.005 204.449L243.039 193.828Z";
+const catCache=new Map();
+function catURL(corOlhos){
+  if(catCache.has(corOlhos)) return catCache.get(corOlhos);
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="146 86 210 162">`
+    +`<path d="${CAT_FACE}" fill="#fff"/>`
+    +`<path d="${CAT_EYE1}" fill="${corOlhos}"/><path d="${CAT_EYE2}" fill="${corOlhos}"/>`
+    +`<path d="${CAT_NOSE}" fill="${corOlhos}"/></svg>`;
+  const url=`url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  catCache.set(corOlhos,url);
+  return url;
+}
+const PALETA=["#4C86FF","#8B7BFF","#E15C8B","#3DD68C","#F2884B","#16C0D6","#C264E8","#5B6EF0","#E0538C","#2FB0A0"];
+function corDe(nome){ return PALETA[hueOf(nome||"?")%PALETA.length]; }
 function pintarAvatar(el, nome, url){
   if(!el) return;
-  if(url){ el.style.backgroundImage=`url("${url}")`; el.textContent=""; el.style.background_color=""; }
-  else{
-    el.style.backgroundImage="";
-    const h=hueOf(nome||"?");
-    el.style.background=`linear-gradient(150deg, hsl(${205+h%70} ${58+h%22}% ${58+h%12}%), hsl(${218+h%60} ${52+h%20}% ${42+h%10}%))`;
-    el.textContent=initials(nome||"?");
+  el.textContent="";
+  if(url){
+    el.style.background="";
+    el.style.backgroundImage=`url("${url}")`;
+    el.style.backgroundSize="cover"; el.style.backgroundPosition="center";
+  }else{
+    const cor=corDe(nome);
+    el.style.backgroundImage=`${catURL(cor)}, linear-gradient(150deg, ${cor}, ${cor}cc)`;
+    el.style.backgroundSize="76% auto, cover";
+    el.style.backgroundPosition="center 56%, center";
+    el.style.backgroundRepeat="no-repeat, no-repeat";
   }
 }
 function perfilDe(nome){ return roster.find(r=>r.name===nome) || null; }
@@ -3237,6 +3301,56 @@ function abrirCartao(nome){
   $("cardModal").hidden=false;
 }
 
+/* ================= menu do botão direito na pessoa ================= */
+let ctxAlvo=null;
+function abrirCtx(nome, x, y){
+  const p=perfilDe(nome); if(!p) return;
+  ctxAlvo=p;
+  $("ctxName").textContent=nome;
+  const eu = peer && p.id===peer.id;
+  const v=volOf(nome);
+  $("ctxVol").value=v; $("ctxVolNum").textContent=v+"%";
+  $("ctxMuteSw").classList.toggle("on", v===0);
+  // volume e silenciar só fazem sentido para outra pessoa
+  $("ctxVol").parentElement.hidden = eu;
+  $("ctxMute").hidden = eu;
+  $("ctxMention").hidden = eu;
+  const dono = isHub && !eu;
+  $("ctxKick").hidden = !dono;
+  $("ctxHostSep").hidden = !dono;
+  const m=$("ctxMenu");
+  m.hidden=false;
+  const r=m.getBoundingClientRect();
+  m.style.left=Math.min(x, window.innerWidth-r.width-10)+"px";
+  m.style.top=Math.min(y, window.innerHeight-r.height-10)+"px";
+}
+function fecharCtx(){ $("ctxMenu").hidden=true; ctxAlvo=null; }
+document.addEventListener("click",e=>{ if(!$("ctxMenu").hidden && !$("ctxMenu").contains(e.target)) fecharCtx(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") fecharCtx(); });
+window.addEventListener("blur",fecharCtx);
+$("ctxProfile").onclick=()=>{ const n=ctxAlvo&&ctxAlvo.name; fecharCtx(); if(n) abrirCartao(n); };
+$("ctxMention").onclick=()=>{ const n=ctxAlvo&&ctxAlvo.name; fecharCtx(); if(!n) return; $("chatIn").value=($("chatIn").value+" @"+n+" ").replace(/^\s+/,""); $("chatIn").focus(); };
+$("ctxVol").oninput=e=>{
+  if(!ctxAlvo) return;
+  const v=+e.target.value;
+  setVol(ctxAlvo.name, v); applyVol(ctxAlvo.id);
+  $("ctxVolNum").textContent=v+"%";
+  $("ctxMuteSw").classList.toggle("on", v===0);
+};
+$("ctxMute").onclick=()=>{
+  if(!ctxAlvo) return;
+  const v = volOf(ctxAlvo.name)===0 ? 100 : 0;
+  setVol(ctxAlvo.name, v); applyVol(ctxAlvo.id);
+  $("ctxVol").value=v; $("ctxVolNum").textContent=v+"%";
+  $("ctxMuteSw").classList.toggle("on", v===0);
+  toast(v===0 ? ctxAlvo.name+" silenciado para você" : ctxAlvo.name+" com áudio de volta");
+};
+$("ctxKick").onclick=()=>{
+  const p=ctxAlvo; fecharCtx();
+  if(!p||!isHub) return;
+  if(confirm("Expulsar "+p.name+" da sala?")) kick(p.id);
+};
+
 /* ================= painel do usuário ================= */
 $("btnCfg").onclick=()=>{ $("cfgModal").hidden=false; };
 $("btnCfgClose").onclick=()=>{ $("cfgModal").hidden=true; };
@@ -3283,12 +3397,12 @@ function pintarPainel(){
     return [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];
   }
   function medir(){
-    const lado=Math.min(window.innerWidth*0.92, window.innerHeight*0.86, 860);
+    const lado=Math.min(window.innerWidth*1.25, window.innerHeight*1.35, 1500);
     W=H=Math.round(lado);
     cv.style.width=W+"px"; cv.style.height=H+"px";
     cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    R=W*0.31;
+    R=W*0.30;
   }
   function quadro(){
     t += reduz ? 0 : 0.0045;
@@ -3344,7 +3458,7 @@ function pintarPainel(){
 })();
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.01.11";
+const VERSION="2026.09.01.12";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

@@ -427,11 +427,11 @@
   /* ---- modais ---- */
   .modal{position:fixed;inset:0;background:rgba(3,6,14,.72);backdrop-filter:blur(8px);display:grid;place-items:center;z-index:50;padding:16px}
   .sheet{width:min(440px,100%);overflow:hidden;max-height:92vh;overflow-y:auto}
-  .banner{height:124px;background:rgba(255,255,255,.05);background-size:cover;background-position:center;position:relative;display:grid;place-items:center}
+  .banner{height:132px;background:rgba(255,255,255,.05);background-size:cover;background-position:center;position:relative;display:grid;place-items:center;overflow:hidden;z-index:0}
   .banner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .bhint{font:600 10.5px var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
-  .sheet-body{padding:17px;display:grid;gap:13px}
-  .sheet-body .avatar.big{margin-top:-48px;box-shadow:0 0 0 4px rgba(12,17,32,.95)}
+  .sheet-body{padding:17px;display:grid;gap:13px;position:relative;z-index:1}
+  .sheet-body .avatar.big{position:relative;z-index:2;margin-top:-48px;box-shadow:0 0 0 4px rgba(12,17,32,.95)}
   .upl{display:flex;align-items:center;gap:11px;cursor:pointer;font-size:12.5px;color:var(--dim)}
   .upl em{font-style:normal}
   .upl:hover em{color:var(--accent-2)}
@@ -591,6 +591,7 @@
   #cfgModal .box{background:rgba(255,255,255,.05);box-shadow:none;backdrop-filter:none}
   #cfgModal .box::after{display:none}
   .vlab{font:600 9.5px var(--body);letter-spacing:.07em;color:var(--dim)}
+  .bfit{display:grid;gap:6px;background:rgba(255,255,255,.04);border-radius:10px;padding:9px 11px}
   .qual-head{font:600 10px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dimmer);margin-top:4px}
   .qual{display:grid;gap:5px;font-size:12px;color:var(--dim)}
   .qual-row{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 9px}
@@ -1183,6 +1184,10 @@
     <div class="banner" id="profBanner"><span class="bhint">banner</span></div>
     <div class="sheet-body">
       <label class="upl" id="uplAvatar"><span class="avatar big" id="profAvatar"></span><em>trocar foto (até 10 MB)</em><input type="file" accept="image/*" hidden id="fileAvatar"></label>
+      <div class="bfit" id="bfit" hidden>
+        <div class="volrow" style="padding-left:0"><span class="vlab">POSIÇÃO</span><input type="range" id="bPos" min="0" max="100" step="1" value="50"><span class="volnum" id="bPosN">50%</span></div>
+        <div class="volrow" style="padding-left:0"><span class="vlab">ZOOM</span><input type="range" id="bZoom" min="100" max="260" step="5" value="100"><span class="volnum" id="bZoomN">100%</span></div>
+      </div>
       <label class="upl wide" id="uplBanner"><em>trocar banner — imagem, GIF ou vídeo (até 40 MB)</em><input type="file" accept="image/*,video/mp4,video/webm" hidden id="fileBanner"></label>
       <div class="field"><label for="profName">Nome de exibição</label><input class="txt" id="profName" maxlength="24"></div>
       <div class="field"><label for="profBio">Sobre você</label><input class="txt" id="profBio" maxlength="190" placeholder="uma linha sobre você"></div>
@@ -3650,22 +3655,42 @@ $("btnProfile").onclick=()=>{
   $("profBio").value = me.bio||"";
   $("profAccent").value = (me.accent&&me.accent.toUpperCase()!=="#FFD400") ? me.accent : "#4C86FF";
   pintarAvatar($("profAvatar"), me.display_name||me.username, me.avatar_url);
-  pintarBanner($("profBanner"), me.banner_url);
+  $("bPos").value = me.banner_pos ?? 50;
+  $("bZoom").value = me.banner_zoom ?? 100;
+  $("bPosN").textContent=($("bPos").value)+"%";
+  $("bZoomN").textContent=($("bZoom").value)+"%";
+  $("bfit").hidden = !me.banner_url;
+  pintarBanner($("profBanner"), me.banner_url, me.banner_pos, me.banner_zoom);
   $("profErr").hidden=true;
   $("profModal").hidden=false;
 };
+function ajustarBannerVivo(){
+  if(!me) return;
+  me.banner_pos=+$("bPos").value; me.banner_zoom=+$("bZoom").value;
+  $("bPosN").textContent=me.banner_pos+"%"; $("bZoomN").textContent=me.banner_zoom+"%";
+  pintarBanner($("profBanner"), me.banner_url, me.banner_pos, me.banner_zoom);
+}
+$("bPos").oninput=ajustarBannerVivo;
+$("bZoom").oninput=ajustarBannerVivo;
 $("btnProfClose").onclick=()=>$("profModal").hidden=true;
 $("btnCardClose").onclick=()=>$("cardModal").hidden=true;
 [$("profModal"),$("cardModal")].forEach(m=>m.onclick=e=>{ if(e.target===m) m.hidden=true; });
 
-function pintarBanner(el, url){
+function pintarBanner(el, url, pos, zoom){
+  const py = (pos===undefined||pos===null) ? 50 : Number(pos);
+  const z  = (zoom===undefined||zoom===null) ? 100 : Number(zoom);
   el.innerHTML=""; el.style.backgroundImage="";
   if(!url){ const s2=document.createElement("span"); s2.className="bhint"; s2.textContent="sem banner"; el.append(s2); return; }
   if(/\.(mp4|webm)(\?|$)/i.test(url)){
     const v=document.createElement("video"); v.src=url; v.autoplay=true; v.loop=true; v.muted=true; v.playsInline=true;
+    v.style.objectFit="cover";
+    v.style.objectPosition="center "+py+"%";
+    v.style.transform="scale("+(z/100)+")";
     el.append(v); v.play().catch(()=>{});
   }else{
     el.style.backgroundImage=`url("${url}")`;
+    el.style.backgroundSize=(z===100?"cover":z+"% auto");
+    el.style.backgroundPosition="center "+py+"%";
   }
 }
 async function subirArquivo(file, tipo){
@@ -3687,7 +3712,7 @@ $("fileAvatar").onchange=async e=>{
 $("fileBanner").onchange=async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f||!me) return;
   if(f.size>40*1024*1024) return erroPerfil("Banner muito grande — o limite é 40 MB. Em MP4 o mesmo vídeo costuma ficar 10x menor que em GIF.");
-  try{ me.banner_url=await subirArquivo(f,"banner"); pintarBanner($("profBanner"), me.banner_url); toast("Banner carregado — clique em salvar"); }
+  try{ me.banner_url=await subirArquivo(f,"banner"); $("bfit").hidden=false; pintarBanner($("profBanner"), me.banner_url, me.banner_pos, me.banner_zoom); toast("Banner carregado — ajuste e salve"); }
   catch(err){ erroPerfil("Não consegui subir o banner: "+err.message); }
 };
 function erroPerfil(t){ const e=$("profErr"); e.hidden=false; e.textContent=t; }
@@ -3698,9 +3723,18 @@ $("btnProfSave").onclick=async()=>{
     bio:$("profBio").value.trim().slice(0,190),
     accent:$("profAccent").value,
     avatar_url:me.avatar_url||null,
-    banner_url:me.banner_url||null
+    banner_url:me.banner_url||null,
+    banner_pos:+$("bPos").value,
+    banner_zoom:+$("bZoom").value
   };
-  const { error } = await sb.from("profiles").update(patch).eq("id",me.id);
+  let { error } = await sb.from("profiles").update(patch).eq("id",me.id);
+  if(error && /banner_pos|banner_zoom|column/i.test(error.message||"")){
+    // banco antigo: salva o resto e avisa qual SQL falta
+    const {banner_pos, banner_zoom, ...resto}=patch;
+    const r2=await sb.from("profiles").update(resto).eq("id",me.id);
+    error=r2.error;
+    if(!error) erroPerfil("Salvei, mas o ajuste do banner precisa do SQL novo (castify-supabase-banner.sql).");
+  }
   if(error) return erroPerfil(error.message);
   Object.assign(me,patch);
   pintarMe();
@@ -3711,14 +3745,14 @@ $("btnProfSave").onclick=async()=>{
 };
 function meuPerfilResumo(){
   if(!me) return null;
-  return { av:me.avatar_url||null, bn:me.banner_url||null, ac:me.accent||null, bio:me.bio||null, user:me.username };
+  return { av:me.avatar_url||null, bn:me.banner_url||null, bp:me.banner_pos??50, bz:me.banner_zoom??100, ac:me.accent||null, bio:me.bio||null, user:me.username };
 }
 
 /* ---------- cartão de perfil de outra pessoa ---------- */
 function abrirCartao(nome){
   const p=perfilDe(nome); if(!p) return;
   const pr=p.prof||{};
-  pintarBanner($("cardBanner"), pr.bn);
+  pintarBanner($("cardBanner"), pr.bn, pr.bp, pr.bz);
   pintarAvatar($("cardAvatar"), p.name, pr.av);
   $("cardName").textContent=p.name;
   $("cardName").style.color=pr.ac||"var(--txt)";
@@ -4238,7 +4272,7 @@ async function onMus(d){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.04.2";
+const VERSION="2026.09.04.3";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

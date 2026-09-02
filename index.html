@@ -334,7 +334,7 @@
   .pname{color:var(--dim);font-weight:500}
   .people li.talking .pname,.people li:hover .pname{color:var(--txt)}
   .avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--mono);color:#04101F;flex:none;background-size:cover;background-position:center}
-  .avatar.big{width:54px;height:54px;font-size:18px}
+  .avatar.big{width:62px;height:62px;font-size:20px}
   .tag{margin-left:auto;font:600 9.5px var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--dimmer)}
   .tag.livetag{color:var(--accent-2)}
   .kick{background:none;border:0;color:var(--dimmer);cursor:pointer;font:700 14px var(--mono);padding:0 4px}
@@ -525,17 +525,17 @@
   /* ---- layout em altura cheia ---- */
   #room.on{height:calc(100vh - 96px);min-height:560px;align-items:stretch}
   /* transmitindo: canais | palco no meio | bate-papo à direita */
-  #room.on{grid-template-columns:300px 1fr 348px;grid-template-areas:"rail stage side"}
+  #room.on{grid-template-columns:320px 1fr 348px;grid-template-areas:"rail stage side"}
   #room.on > *{min-width:0;min-height:0}
   #room.on > .railcol{grid-area:rail}
   #room.on > .stagewrap{grid-area:stage}
   #room.on > .side{grid-area:side}
   /* ninguém transmitindo: o bate-papo toma o centro inteiro, com uma faixa de voz em cima */
   /* ninguém transmitindo: só canais e bate-papo, ocupando a tela */
-  #room.on.quiet{grid-template-columns:300px 1fr;grid-template-areas:"rail side"}
+  #room.on.quiet{grid-template-columns:320px 1fr;grid-template-areas:"rail side"}
   @media (max-width:1200px){
-    #room.on{grid-template-columns:268px 1fr 310px}
-    #room.on.quiet{grid-template-columns:268px 1fr}
+    #room.on{grid-template-columns:296px 1fr 310px}
+    #room.on.quiet{grid-template-columns:296px 1fr}
   }
   @media (max-width:1000px){
     #room.on,#room.on.quiet{grid-template-columns:1fr;grid-template-areas:none;height:auto}
@@ -575,8 +575,8 @@
   .online{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px rgba(61,214,140,.18)}
   /* todos os botões numa fileira só */
   .mp-btns{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;row-gap:5px}
-  .ic.sm{width:27px;height:27px;border-radius:9px;flex:0 0 auto}
-  .ic.sm svg{width:14px;height:14px}
+  .ic.sm{width:34px;height:34px;border-radius:10px;flex:0 0 auto}
+  .ic.sm svg{width:17px;height:17px}
   .ic.muted{background:rgba(242,84,91,.2);border-color:rgba(242,84,91,.45);color:#FF9A9E}
   .ic.muted:hover{background:var(--danger);color:#fff}
   .ic.sm svg{width:16px;height:16px}
@@ -694,14 +694,17 @@
   #room.on .chmembers{margin-left:20px}
 
   #room.on .mepanel{border-radius:0;box-shadow:none;backdrop-filter:none;background:var(--sur-5);
-    border:0;border-top:1px solid var(--line-1);padding:10px 10px 11px;gap:9px;
+    border:0;border-top:1px solid var(--line-1);padding:12px 12px 14px;gap:11px;
     align-content:end;align-self:end;height:auto}
-  #room.on .mepanel .mp-top{padding:0 2px}
-  /* fileira única de botões, com uma linha fina separando do nome */
-  #room.on .mp-btns{gap:3px;justify-content:space-between;padding-top:9px;
-    border-top:1px solid var(--line-1)}
-  #room.on .ic.sm{width:28px;height:28px;border-radius:8px}
-  #room.on .ic.sm svg{width:14px;height:14px}
+  #room.on .mepanel .mp-top{padding:0 2px;gap:11px}
+  #room.on .mepanel .avatar{width:42px;height:42px;font-size:14px}
+  #room.on .mp-txt b{font-size:15px}
+  #room.on .mp-txt i{font-size:11.5px}
+  /* botões maiores, em duas fileiras centralizadas */
+  #room.on .mp-btns{gap:6px;justify-content:center;padding-top:11px;
+    border-top:1px solid var(--line-1);row-gap:6px}
+  #room.on .ic.sm{width:36px;height:36px;border-radius:10px}
+  #room.on .ic.sm svg{width:18px;height:18px}
   #room.on .mepanel::after{display:none}
 
   #room.on .side > .box{background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none}
@@ -1179,8 +1182,8 @@
   <div class="sheet">
     <div class="banner" id="profBanner"><span class="bhint">banner</span></div>
     <div class="sheet-body">
-      <label class="upl" id="uplAvatar"><span class="avatar big" id="profAvatar"></span><em>trocar foto</em><input type="file" accept="image/*" hidden id="fileAvatar"></label>
-      <label class="upl wide" id="uplBanner"><em>trocar banner (imagem, GIF ou vídeo curto)</em><input type="file" accept="image/*,video/mp4,video/webm" hidden id="fileBanner"></label>
+      <label class="upl" id="uplAvatar"><span class="avatar big" id="profAvatar"></span><em>trocar foto (até 10 MB)</em><input type="file" accept="image/*" hidden id="fileAvatar"></label>
+      <label class="upl wide" id="uplBanner"><em>trocar banner — imagem, GIF ou vídeo (até 40 MB)</em><input type="file" accept="image/*,video/mp4,video/webm" hidden id="fileBanner"></label>
       <div class="field"><label for="profName">Nome de exibição</label><input class="txt" id="profName" maxlength="24"></div>
       <div class="field"><label for="profBio">Sobre você</label><input class="txt" id="profBio" maxlength="190" placeholder="uma linha sobre você"></div>
       <div class="field"><label for="profAccent">Cor de destaque</label><input type="color" id="profAccent" class="txt colorin"></div>
@@ -3668,20 +3671,22 @@ function pintarBanner(el, url){
 async function subirArquivo(file, tipo){
   const ext=(file.name.split(".").pop()||"png").toLowerCase();
   const caminho=`${me.id}/${tipo}.${ext}`;
-  const { error } = await sb.storage.from("perfis").upload(caminho, file, { upsert:true, cacheControl:"60" });
+  toast("Enviando "+Math.max(1,Math.round(file.size/1024/1024))+" MB…");
+  // cache de uma semana: um GIF grande só é baixado uma vez por pessoa
+  const { error } = await sb.storage.from("perfis").upload(caminho, file, { upsert:true, cacheControl:"604800" });
   if(error) throw error;
   const { data } = sb.storage.from("perfis").getPublicUrl(caminho);
   return data.publicUrl+"?v="+Date.now();
 }
 $("fileAvatar").onchange=async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f||!me) return;
-  if(f.size>3*1024*1024) return erroPerfil("Foto muito grande — use até 3 MB.");
+  if(f.size>10*1024*1024) return erroPerfil("Foto muito grande — use até 10 MB.");
   try{ me.avatar_url=await subirArquivo(f,"avatar"); pintarAvatar($("profAvatar"), me.display_name, me.avatar_url); toast("Foto carregada — clique em salvar"); }
   catch(err){ erroPerfil("Não consegui subir a foto: "+err.message); }
 };
 $("fileBanner").onchange=async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f||!me) return;
-  if(f.size>8*1024*1024) return erroPerfil("Banner muito grande — use até 8 MB. Vídeo curto em MP4 costuma ficar bem menor que GIF.");
+  if(f.size>40*1024*1024) return erroPerfil("Banner muito grande — o limite é 40 MB. Em MP4 o mesmo vídeo costuma ficar 10x menor que em GIF.");
   try{ me.banner_url=await subirArquivo(f,"banner"); pintarBanner($("profBanner"), me.banner_url); toast("Banner carregado — clique em salvar"); }
   catch(err){ erroPerfil("Não consegui subir o banner: "+err.message); }
 };
@@ -4233,7 +4238,7 @@ async function onMus(d){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.04.1";
+const VERSION="2026.09.04.2";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

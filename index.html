@@ -43,6 +43,8 @@
     --shadow:0 10px 34px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
   }
   *{box-sizing:border-box}
+  /* sem isto o Windows desenha as listas de <select> em branco */
+  :root{color-scheme:dark}
   [hidden]{display:none!important}
   html{background:var(--bg)}
   html,body{margin:0;color:var(--txt);font-family:var(--body);font-size:15px}
@@ -120,7 +122,16 @@
   .pill.wide{width:100%;justify-content:center;padding:12px;border-radius:12px}
   button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
   select.pick{font:500 12px var(--body);background:var(--glass-2);color:var(--txt);border:1px solid var(--stroke-soft);
-    border-radius:99px;padding:7px 11px;max-width:170px;cursor:pointer}
+    border-radius:99px;padding:7px 11px;max-width:170px;cursor:pointer;
+    appearance:none;-webkit-appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+    background-position:calc(100% - 15px) center,calc(100% - 10px) center;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:26px}
+  select.pick:hover{border-color:var(--stroke)}
+  /* a lista aberta: fundo escuro e opção destacada em azul */
+  select.pick option{background:#0E1320;color:var(--txt);padding:8px}
+  select.pick option:checked{background:var(--accent);color:#fff}
+  #room.on select.pick{background-color:rgba(255,255,255,.06)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
   #updateBar{display:flex;align-items:center;gap:12px;margin-top:10px;padding:11px 16px;border-radius:var(--r);
@@ -4458,7 +4469,7 @@ async function onMus(d){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.05.3";
+const VERSION="2026.09.05.4";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;

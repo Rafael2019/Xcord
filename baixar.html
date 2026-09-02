@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Castify — baixar</title>
+<meta name="description" content="Castify: voz, transmissão de tela e câmera direto entre as máquinas. Baixe o app para Windows.">
+<meta name="theme-color" content="#080B14">
+<link rel="icon" href="icon-192.png">
+<meta property="og:title" content="Castify">
+<meta property="og:description" content="Voz, tela e câmera entre amigos. Sem servidor no meio.">
+<meta property="og:image" content="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#080B14;--txt:#E8ECF6;--dim:#8791AB;--dimmer:#5E6880;
+    --accent:#4C86FF;--accent-2:#7AA6FF;--violet:#8B7BFF;--good:#3DD68C;--warn:#FF9F6B;
+    --stroke:rgba(255,255,255,.12);--stroke-soft:rgba(255,255,255,.06);
+    --body:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono",monospace;--display:"Bricolage Grotesque",Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  :root{color-scheme:dark}
+  html{background:var(--bg)}
+  body{margin:0;color:var(--txt);font-family:var(--body);font-size:16px;position:relative;overflow-x:hidden;background:transparent}
+
+  /* fundo em movimento, igual ao do app */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+      background:radial-gradient(120% 90% at 50% -10%, #101a35 0%, #0B0F1C 45%, var(--bg) 100%)}
+  .bg i{position:absolute;display:block;border-radius:50%;filter:blur(90px);opacity:.4;animation:drift 38s ease-in-out infinite alternate}
+  .bg i:nth-child(1){width:42vw;height:42vw;left:-10vw;top:-14vw;background:#2F63FF}
+  .bg i:nth-child(2){width:32vw;height:32vw;right:-8vw;top:2vh;background:#6C4CFF;opacity:.3;animation-duration:46s}
+  .bg b{position:absolute;left:50%;top:44%;width:190vmax;height:190vmax;transform:translate(-50%,-50%);
+    background:conic-gradient(from 0deg, transparent 0deg, rgba(76,134,255,.16) 18deg, transparent 46deg,
+      transparent 130deg, rgba(139,123,255,.13) 150deg, transparent 178deg,
+      transparent 250deg, rgba(22,214,255,.11) 272deg, transparent 300deg);
+    filter:blur(40px);animation:spin 70s linear infinite}
+  @keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(6vw,7vh) scale(1.12)}}
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.15;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+
+  .wrap{position:relative;z-index:3;max-width:900px;margin:0 auto;padding:56px 22px 70px}
+  header{text-align:center}
+  .logo{width:150px;height:auto;color:var(--accent);filter:drop-shadow(0 8px 30px rgba(76,134,255,.45));animation:up .6s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes up{from{opacity:0;transform:translateY(-10px) scale(.95)}to{opacity:1;transform:none}}
+  h1{font-family:var(--display);font-size:clamp(30px,5vw,44px);letter-spacing:-.02em;margin:18px 0 8px}
+  .lead{color:var(--dim);font-size:16.5px;line-height:1.6;max-width:44ch;margin:0 auto}
+
+  .cta{display:flex;flex-direction:column;align-items:center;gap:10px;margin:32px 0 8px}
+  .baixar{display:inline-flex;align-items:center;gap:12px;text-decoration:none;
+    background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;font:700 17px var(--body);
+    padding:17px 34px;border-radius:14px;box-shadow:0 12px 34px rgba(76,134,255,.4);transition:transform .14s,filter .14s}
+  .baixar:hover{filter:brightness(1.08);transform:translateY(-2px)}
+  .baixar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .sub{font:400 12.5px var(--mono);color:var(--dimmer)}
+  .abrir{color:var(--accent-2);font-size:13.5px;text-decoration:none;border-bottom:1px solid transparent}
+  .abrir:hover{border-color:var(--accent-2)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:44px 0 0}
+  .card{background:linear-gradient(150deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+    backdrop-filter:saturate(160%) blur(20px);border:1px solid var(--stroke);border-radius:16px;padding:20px;
+    box-shadow:0 16px 44px rgba(2,6,18,.45), inset 0 1px 0 rgba(255,255,255,.14)}
+  .card h3{font-family:var(--display);font-size:17px;margin:0 0 7px;display:flex;align-items:center;gap:8px}
+  .card p{margin:0;color:var(--dim);font-size:13.5px;line-height:1.6}
+  .card .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
+    background:rgba(76,134,255,.16);color:var(--accent-2)}
+  .card .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+  section.bloco{margin-top:44px;background:linear-gradient(150deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    backdrop-filter:saturate(150%) blur(18px);border:1px solid var(--stroke);border-radius:16px;padding:24px}
+  section.bloco h2{font-family:var(--display);font-size:20px;margin:0 0 14px}
+  ol{margin:0;padding-left:20px;color:var(--dim);font-size:14px;line-height:1.85}
+  ol b{color:var(--txt)}
+  .aviso{display:flex;gap:12px;align-items:flex-start;margin-top:18px;padding:14px 16px;border-radius:12px;
+    background:rgba(255,159,107,.1);border:1px solid rgba(255,159,107,.28)}
+  .aviso .em{font-size:18px;line-height:1.2}
+  .aviso p{margin:0;font-size:13.5px;line-height:1.6;color:#FFD3BC}
+  .aviso b{color:#fff}
+  .req{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font:400 12.5px var(--mono);color:var(--dimmer)}
+  .req span{display:flex;align-items:center;gap:6px}
+  .req i{width:6px;height:6px;border-radius:50%;background:var(--good);font-style:normal}
+  footer{margin-top:40px;text-align:center;font:400 11.5px var(--mono);color:var(--dimmer);line-height:2}
+  footer a{color:var(--dimmer)}
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><b></b></div>
+<div class="grain"></div>
+
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="146 86 210 162" role="img" aria-label="Castify" xmlns="http://www.w3.org/2000/svg">
+      <path d="M171.34 92.9375L211.168 132.766C237.72 127.455 264.272 127.4 290.824 132.766L330.652 92.9375C330.652 92.9375 348.353 119.49 348.353 172.594C348.353 225.698 322.02 240.744 250.996 240.744C179.972 240.744 153.638 225.698 153.638 172.594C153.638 119.49 171.34 92.9375 171.34 92.9375Z" fill="#fff"/>
+      <path d="M213.829 181.877C223.361 181.877 231.088 174.15 231.088 164.618C231.088 155.086 223.361 147.359 213.829 147.359C204.297 147.359 196.57 155.086 196.57 164.618C196.57 174.15 204.297 181.877 213.829 181.877Z" fill="currentColor"/>
+      <path d="M288.173 181.877C297.705 181.877 305.432 174.15 305.432 164.618C305.432 155.086 297.705 147.359 288.173 147.359C278.641 147.359 270.914 155.086 270.914 164.618C270.914 174.15 278.641 181.877 288.173 181.877Z" fill="currentColor"/>
+      <path d="M243.039 193.828H258.97L251.005 204.449L243.039 193.828Z" fill="currentColor"/>
+    </svg>
+    <h1>Castify</h1>
+    <p class="lead">Voz, transmissão de tela e câmera direto entre as máquinas. Sem servidor no meio do vídeo.</p>
+
+    <div class="cta">
+      <a class="baixar" id="link" href="https://github.com/Rafael2019/Xcord/releases/latest/download/Castify-setup.exe">
+        <svg viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M4 21h16"/></svg>
+        Baixar para Windows
+      </a>
+      <span class="sub" id="ver">instalador · ~2 MB · Windows 10 ou 11</span>
+      <a class="abrir" href="./">ou abrir direto no navegador</a>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <h3><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></span>Voz e canais</h3>
+      <p>Canais de voz e de texto, com quem está falando destacado e volume individual por pessoa.</p>
+    </div>
+    <div class="card">
+      <h3><span class="ic"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/></svg></span>Tela e câmera</h3>
+      <p>Transmite jogo ou tela com qualidade que se ajusta à sua banda. Câmera junto, se quiser.</p>
+    </div>
+    <div class="card">
+      <h3><span class="ic"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="16" r="2.6"/></svg></span>Música e filmes juntos</h3>
+      <p>Fila de músicas do YouTube sincronizada e sessão de vídeo para assistir junto.</p>
+    </div>
+    <div class="card">
+      <h3><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"/></svg></span>Direto entre nós</h3>
+      <p>O vídeo vai da sua máquina para a do outro. Não passa por servidor de empresa nenhuma.</p>
+    </div>
+  </div>
+
+  <section class="bloco">
+    <h2>Como instalar</h2>
+    <ol>
+      <li>Baixe o instalador no botão acima.</li>
+      <li>O Windows vai mostrar um aviso azul. Clique em <b>Mais informações</b> e depois em <b>Executar assim mesmo</b>.</li>
+      <li>Instale — não pede senha de administrador.</li>
+      <li>Abra o Castify, crie sua conta e peça o <b>código do servidor</b> para quem te chamou.</li>
+    </ol>
+
+    <div class="aviso">
+      <span class="em">⚠️</span>
+      <p><b>Sobre o aviso do Windows:</b> ele aparece porque o instalador não tem certificado digital, que é um documento pago que os desenvolvedores compram todo ano. Como isso aqui é um projeto entre amigos, não vale a pena — mas é o motivo do aviso, e não sinal de problema. Se preferir não instalar nada, o botão “abrir direto no navegador” funciona igual, só sem os atalhos globais.</p>
+    </div>
+
+    <div class="req">
+      <span><i></i>Windows 10 ou 11</span>
+      <span><i></i>Fone recomendado</span>
+      <span><i></i>F8 para falar · F9 para mudo</span>
+    </div>
+  </section>
+
+  <footer>
+    Castify · feito por Rafael Pertile<br>
+    <a href="./">abrir no navegador</a> · <a href="https://github.com/Rafael2019/Xcord/releases">todas as versões</a>
+  </footer>
+</div>
+
+<script>
+  // mostra o tamanho e a data reais do instalador publicado, se a API responder
+  fetch("https://api.github.com/repos/Rafael2019/Xcord/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (!d) return;
+      const a = (d.assets || []).find(x => /\.exe$/i.test(x.name));
+      if (!a) return;
+      document.getElementById("link").href = a.browser_download_url;
+      const mb = (a.size / 1048576).toFixed(1);
+      const data = new Date(d.published_at).toLocaleDateString("pt-BR");
+      document.getElementById("ver").textContent =
+        (d.tag_name || "instalador") + " · " + mb + " MB · publicado em " + data;
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>

@@ -752,6 +752,25 @@
   .qitem button:hover{color:var(--danger)}
   .qitem.now{background:rgba(76,134,255,.14);box-shadow:inset 2px 0 0 var(--accent)}
   .mus-hint{font-size:11.5px;color:var(--dimmer)}
+  /* ---- servidores e ranking ---- */
+  .srv-wrap{display:grid;gap:7px;margin-bottom:6px}
+  .srv-title{font:600 10.5px var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+  .srv-list{display:grid;gap:6px}
+  .srv{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid var(--stroke-soft);
+    border-radius:11px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}
+  .srv:hover{border-color:var(--accent);background:rgba(76,134,255,.12)}
+  .srv .sicon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(150deg,var(--accent),var(--violet));color:#fff;font:800 14px var(--body)}
+  .srv .sn{flex:1;min-width:0;display:grid}
+  .srv .sn b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .srv .sn i{font-style:normal;font:400 10.5px var(--mono);color:var(--dimmer)}
+  .rank{display:grid;gap:6px;max-height:340px;overflow:auto}
+  .rank-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 11px}
+  .rank-pos{font:800 13px var(--mono);color:var(--dimmer);width:22px;flex:none}
+  .rank-row.top1 .rank-pos{color:#FFD46B}.rank-row.top2 .rank-pos{color:#CFD6E4}.rank-row.top3 .rank-pos{color:#E0A46B}
+  .rank-nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13.5px}
+  .rank-t{font:600 12px var(--mono);color:var(--accent-2)}
+  .rank-bar{height:4px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--violet));margin-top:4px}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:linear-gradient(180deg,var(--accent),#3A6FE0);color:#fff;
     font:600 13px var(--body);padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center;z-index:99;
     box-shadow:0 10px 30px var(--glow)}
@@ -853,7 +872,14 @@
         <input class="txt" id="nick" maxlength="18" placeholder="como te chamam" autocomplete="off">
       </div>
       <div class="choice" id="lobbyChoice">
-        <button class="pill accent wide" id="btnGoJoin">Entrar numa sala</button>
+        <div class="srv-wrap" id="srvWrap" hidden>
+          <div class="srv-title">Seus servidores</div>
+          <div class="srv-list" id="srvList"></div>
+        </div>
+        <button class="pill accent wide" id="btnNewSrv" hidden>Criar servidor</button>
+        <button class="pill wide" id="btnJoinSrv" hidden>Entrar com código de servidor</button>
+        <div class="or" id="orSala" hidden>ou sala avulsa</div>
+        <button class="pill wide" id="btnGoJoin">Entrar numa sala</button>
         <button class="pill wide" id="btnGoCreate">Criar uma sala nova</button>
       </div>
 
@@ -926,6 +952,7 @@
           <button class="ic sm" id="btnDeaf" title="Desativar áudio da sala"><svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h2.6a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M20 14h-2.6a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z"/></svg></button>
           <button class="ic sm" id="btnCam" title="Ligar câmera"><svg viewBox="0 0 24 24"><rect x="2.5" y="6.5" width="13" height="11" rx="2.5"/><path d="M15.5 11l6-3.2v8.4l-6-3.2z"/></svg></button>
           <button class="ic sm" id="btnScreen" title="Transmitir tela"><svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7"/><path d="M12 16.5V20"/></svg></button>
+          <button class="ic sm" id="btnRank" title="Quem mais falou"><svg viewBox="0 0 24 24"><path d="M4 20V11h4v9"/><path d="M10 20V4h4v16"/><path d="M16 20v-6h4v6"/></svg></button>
           <button class="ic sm" id="btnMusic" title="Música"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="16" r="2.6"/></svg></button>
           <button class="ic sm" id="btnBoard" title="Sons de zoeira"><svg viewBox="0 0 24 24"><path d="M4 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M17 14.5V17a1.5 1.5 0 0 0 3 0v-2.5"/><path d="M4 14.5a8 8 0 0 1 16 0"/><path d="M9.5 20.5h5"/></svg></button>
           <button class="ic sm" id="btnWatch" title="Assistir junto"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 20.5h8"/><path d="M10.5 9.5l4.5 2.5-4.5 2.5z"/></svg></button>
@@ -1051,6 +1078,20 @@
     <span class="mb-count" id="musCount"></span>
     <button class="pill small" id="musQueueBtn">fila</button>
     <button class="pill red small" id="musStop">parar</button>
+  </div>
+</div>
+
+<div class="modal" id="rankModal" hidden>
+  <div class="sheet">
+    <div class="sheet-body">
+      <div class="cfg-head"><h3>Quem mais falou</h3><button class="pill small" id="rankClose">fechar</button></div>
+      <div class="row" style="gap:6px">
+        <button class="pill small on" id="rank7">7 dias</button>
+        <button class="pill small" id="rank30">30 dias</button>
+        <button class="pill small" id="rank999">sempre</button>
+      </div>
+      <div class="rank" id="rankList">carregando…</div>
+    </div>
   </div>
 </div>
 
@@ -1511,10 +1552,10 @@ function chanTools(kind,c){
   const mk=(txt,title,fn)=>{ const b=document.createElement("button"); b.textContent=txt; b.title=title; b.onclick=ev=>{ ev.stopPropagation(); fn(); }; box.append(b); };
   mk("✎","Renomear",()=>renameChan(kind,c.id));
   if(kind==="voice"){
-    mk(c.locked?"🔒":"🔓", c.locked?"Destrancar":"Trancar canal",()=>{ c.locked=!c.locked; pushChans("mudou a trava de "+c.name); });
+    mk(c.locked?"🔒":"🔓", c.locked?"Destrancar":"Trancar canal",()=>{ c.locked=!c.locked; salvarCanal("voice",c,"upd"); pushChans("mudou a trava de "+c.name); });
     mk(c.limit?String(c.limit):"∞","Limite de pessoas",()=>{
       const v=prompt("Máximo de pessoas em "+c.name+" (0 = sem limite):", String(c.limit||0));
-      if(v===null) return; c.limit=Math.max(0,Math.min(20,parseInt(v)||0)); pushChans("mudou o limite de "+c.name);
+      if(v===null) return; c.limit=Math.max(0,Math.min(20,parseInt(v)||0)); salvarCanal("voice",c,"upd"); pushChans("mudou o limite de "+c.name);
     });
   }
   if(!(kind==="text"&&c.id==="geral")) mk("×","Apagar canal",()=>delChan(kind,c.id));
@@ -1593,7 +1634,8 @@ function addChan(kind){
   if(list.length>=8) return toast("Máximo de 8 canais");
   let id=slug(name); let n=1;
   while(list.find(c=>c.id===id)) id=slug(name)+"-"+(++n);
-  list.push(kind==="text"?{id,name:slug(name)}:{id,name:name.slice(0,18),limit:0,locked:false});
+  const novo = kind==="text"?{id,name:slug(name)}:{id,name:name.slice(0,18),limit:0,locked:false};
+  list.push(novo); salvarCanal(kind,novo,"add");
   pushChans("criou o canal "+name);
 }
 function renameChan(kind,id){
@@ -1602,11 +1644,13 @@ function renameChan(kind,id){
   const antigo=c.name;
   c.name = kind==="text"?slug(name):name.slice(0,18);
   if(kind==="text") $("chTitle").textContent=((chanById("text",myText)||{}).name||myText);
+  salvarCanal(kind,c,"upd");
   pushChans("renomeou "+antigo+" para "+c.name);
 }
 function delChan(kind,id){
   const c=chanById(kind,id); if(!c) return;
   if(!confirm("Apagar o canal "+c.name+"?")) return;
+  salvarCanal(kind,c,"del");
   if(kind==="text"){
     TEXT_CH=TEXT_CH.filter(x=>x.id!==id);
     const el=document.getElementById("log-"+id); if(el) el.remove();
@@ -1991,15 +2035,20 @@ $("btnEnter").onclick=()=>{ if(requireName()) enterRoom($("codeIn").value); };
 $("codeIn").addEventListener("keydown",e=>{ if(e.key==="Enter") $("btnEnter").click(); });
 $("nick").addEventListener("keydown",e=>{ if(e.key==="Enter") $("codeIn").focus(); });
 
-function enterRoom(code, criando){
-  leaving=false; migrating=false; wasHub=false; reconnectTries=0; setNet("ok",""); roomPass=(criando ? $("passNew").value : $("passIn").value).trim(); blocked=new Set(); pending=[]; renderAppr();
+function enterRoom(code, criando, servidor){
+  leaving=false; migrating=false; wasHub=false; reconnectTries=0; setNet("ok","");
+  if(servidor!==undefined) srv=servidor||null;
+  roomPass=(criando ? $("passNew").value : $("passIn").value).trim(); blocked=new Set(); pending=[]; renderAppr();
   code=String(code||"").trim().toUpperCase();
   if(code.length!==6) return toast("O código tem 6 caracteres");
   roomCode=code;
   if(testStream) stopTest();
   myVoice=null; unreadCh={}; mentions={}; myText="geral"; history={}; typers={};
   $("lobby").style.display="none"; $("room").classList.add("on"); document.body.dataset.inroom="1";
-  selectText("geral"); renderRail(); paintStage(); pintarPainel(); loadLocalHist();
+  myText=TEXT_CH[0].id;
+  selectText(myText); renderRail(); paintStage(); pintarPainel();
+  if(srv){ $("abBrand").textContent=srv.name; ligarFlushFala(); }
+  else { $("abBrand").textContent="Castify"; loadLocalHist(); }
   $("roomChip").hidden=false; $("btnShare").hidden=false; $("btnCopyCode").hidden=false; $("abBrand").hidden=true;
   $("roomCode").textContent=code; setStatus("wait","entrando…");
   claimHub(code);
@@ -2683,6 +2732,7 @@ function meterTick(){
     $("lvlFill").classList.toggle("live", open);
     $("lvlMark").style.left = Math.min(100, thr*2.2)+"%";
     const meNow = open && lvl>1;
+    contarFala(meNow);
     if(meNow && !talking.has(peer.id)){ talking.add(peer.id); changed=true; }
     else if(!meNow && talking.has(peer.id)){ talking.delete(peer.id); changed=true; }
   }
@@ -2898,6 +2948,7 @@ function sendChat(){
   addMsg(myName(),text,true,myText,mid,false,rep_);
   if(isHub){ remember(myText,{kind:"msg",id:mid,from:myName(),text}); relay({t:"chat",from:myName(),text,ch:myText,mid,reply:rep_}); }
   else if(hubConn&&hubConn.open) hubConn.send({t:"chat",text,ch:myText,mid,reply:rep_});
+  salvarMensagem(myText, text);
   stopTyping();
 }
 $("btnSend").onclick=sendChat;
@@ -2962,6 +3013,10 @@ $("btnCopyCode").onclick=e=>copyText(roomCode,e.target,"Código copiado: "+roomC
 /* ================= sair ================= */
 function backToLobby(){
   delete document.body.dataset.inroom;
+  srv=null; clearInterval(falaFlush); $("abBrand").textContent="Castify";
+  TEXT_CH=[{id:"geral",name:"geral"},{id:"arquivos",name:"arquivos",files:true}];
+  VOICE_CH=[{id:"conversa",name:"Conversa",limit:0,locked:false},{id:"jogatina",name:"Jogatina",limit:0,locked:false},{id:"afk",name:"AFK",limit:0,locked:false}];
+  carregarServidores();
   $("lobby").style.display="grid"; $("authView").style.display="none"; $("room").classList.remove("on"); $("log").innerHTML="";
   $("roomChip").hidden=true; $("btnShare").hidden=true; $("btnCopyCode").hidden=true; $("abBrand").hidden=false; $("chTitle").textContent="";
   $("apprBox").hidden=true; $("rail").innerHTML="";
@@ -3514,7 +3569,7 @@ $("btnAuth").onclick=async()=>{
       if(error) throw new Error(error.message.includes("Invalid") ? "Email ou senha errados." : error.message);
     }
     await carregarPerfil();
-    mostrarLobby();
+    mostrarLobby(); carregarServidores();
   }catch(e){ authErr(e.message||"Não deu certo."); }
   finally{ $("btnAuth").disabled=false; }
 };
@@ -3763,6 +3818,7 @@ $("btnCfg").onclick=()=>{ $("cfgModal").hidden=false; pintarQualidade(); };
     if(micOn){ await setMicSource(micDeviceId); toast("Microfone reaberto com o novo ajuste"); }
   };
 });
+$("btnRank").onclick=()=>abrirRanking(7);
 $("btnMusic").onclick=()=>{ $("musModal").hidden=false; renderFila(); setTimeout(()=>$("musLink").focus(),60); };
 $("btnBoard").onclick=()=>{ $("sfxModal").hidden=false; if(!micOn) toast("Ligue o microfone para a sala ouvir os sons"); };
 $("btnBoardClose").onclick=()=>{ $("sfxModal").hidden=true; };
@@ -3783,6 +3839,161 @@ function pintarPainel(){
   else if(micOn){ d.style.background="var(--good)"; }
   est.append(d, document.createTextNode(txt));
 }
+
+/* ================= servidores fixos (Supabase) ================= */
+let srv=null;                 // {id,name,code,owner}
+let falaAcum=0, falaFlush=null, falandoDesde=0;
+
+async function carregarServidores(){
+  if(!sb || !me){ $("srvWrap").hidden=true; $("btnNewSrv").hidden=true; $("btnJoinSrv").hidden=true; $("orSala").hidden=true; return; }
+  $("btnNewSrv").hidden=false; $("btnJoinSrv").hidden=false; $("orSala").hidden=false;
+  try{
+    const { data, error } = await sb.from("servers").select("id,name,code,owner").order("created_at");
+    if(error) throw error;
+    const box=$("srvList"); box.innerHTML="";
+    $("srvWrap").hidden = !(data && data.length);
+    (data||[]).forEach(x=>{
+      const b=document.createElement("button"); b.className="srv";
+      const ic=document.createElement("span"); ic.className="sicon"; ic.textContent=(x.name||"?").slice(0,1).toUpperCase();
+      const nn=document.createElement("span"); nn.className="sn";
+      const t=document.createElement("b"); t.textContent=x.name;
+      const c=document.createElement("i"); c.textContent=x.code + (x.owner===me.id?" · seu":"");
+      nn.append(t,c); b.append(ic,nn);
+      b.onclick=()=>abrirServidor(x);
+      box.append(b);
+    });
+  }catch(e){ $("srvWrap").hidden=true; }
+}
+$("btnNewSrv").onclick=async()=>{
+  if(!sb||!me) return;
+  const nome=(prompt("Nome do servidor:","Servidor da galera")||"").trim();
+  if(!nome) return;
+  try{
+    const { data, error } = await sb.rpc("create_server",{ p_name:nome });
+    if(error) throw error;
+    const novo=Array.isArray(data)?data[0]:data;
+    toast("Servidor criado — código "+novo.code);
+    await carregarServidores();
+    abrirServidor({id:novo.id, code:novo.code, name:nome, owner:me.id});
+  }catch(e){ toast("Não consegui criar: "+(e.message||e)); }
+};
+$("btnJoinSrv").onclick=async()=>{
+  if(!sb||!me) return;
+  const cod=(prompt("Código do servidor (6 caracteres):")||"").trim().toUpperCase();
+  if(cod.length!==6) return;
+  try{
+    const { data, error } = await sb.rpc("join_by_code",{ p_code:cod });
+    if(error) throw error;
+    const x=Array.isArray(data)?data[0]:data;
+    await carregarServidores();
+    abrirServidor({id:x.id, code:x.code, name:x.name, owner:null});
+  }catch(e){ toast("Servidor não encontrado"); }
+};
+
+async function abrirServidor(x){
+  srv=x;
+  try{
+    const { data:chs } = await sb.from("channels").select("*").eq("server_id",x.id).order("pos");
+    if(chs && chs.length){
+      TEXT_CH = chs.filter(c=>c.kind==="text").map(c=>({id:c.slug,name:c.name,files:c.slug==="arquivos",dbid:c.id}));
+      VOICE_CH= chs.filter(c=>c.kind==="voice").map(c=>({id:c.slug,name:c.name,limit:c.cap||0,locked:!!c.locked,dbid:c.id}));
+    }
+  }catch(e){}
+  enterRoom(x.code, false, x);
+  setTimeout(()=>carregarHistorico(), 400);
+}
+
+/* ---------- histórico que mora no banco ---------- */
+async function carregarHistorico(){
+  if(!srv||!sb) return;
+  for(const c of TEXT_CH){
+    try{
+      const { data } = await sb.from("messages").select("author,body,created_at")
+        .eq("server_id",srv.id).eq("channel",c.id)
+        .order("created_at",{ascending:false}).limit(50);
+      if(!data || !data.length) continue;
+      const sep=document.createElement("div"); sep.className="sys"; sep.style.opacity=".6"; sep.textContent="— histórico —";
+      pushLog(sep,c.id);
+      data.slice().reverse().forEach(m=>addMsg(m.author, m.body, false, c.id, null, true));
+      const sep2=document.createElement("div"); sep2.className="sys"; sep2.style.opacity=".6"; sep2.textContent="— agora —";
+      pushLog(sep2,c.id);
+      unreadCh[c.id]=0;
+    }catch(e){}
+  }
+  renderRail();
+  $("log").scrollTop=$("log").scrollHeight;
+}
+async function salvarMensagem(canal, texto){
+  if(!srv||!sb||!me) return;
+  try{ await sb.from("messages").insert({ server_id:srv.id, channel:canal, user_id:me.id, author:myName(), body:texto.slice(0,500) }); }catch(e){}
+}
+
+/* ---------- canais guardados no banco ---------- */
+async function salvarCanal(kind, c, acao){
+  if(!srv||!sb||!me||srv.owner!==me.id) return;
+  try{
+    if(acao==="add"){
+      const { data } = await sb.from("channels").insert({
+        server_id:srv.id, kind, slug:c.id, name:c.name, pos:(kind==="text"?TEXT_CH:VOICE_CH).length,
+        locked:!!c.locked, cap:c.limit||0
+      }).select().maybeSingle();
+      if(data) c.dbid=data.id;
+    }else if(acao==="del" && c.dbid){
+      await sb.from("channels").delete().eq("id",c.dbid);
+    }else if(c.dbid){
+      await sb.from("channels").update({ name:c.name, locked:!!c.locked, cap:c.limit||0 }).eq("id",c.dbid);
+    }
+  }catch(e){}
+}
+
+/* ---------- tempo de fala e ranking ---------- */
+function contarFala(falando){
+  if(falando && !falandoDesde) falandoDesde=Date.now();
+  if(!falando && falandoDesde){ falaAcum += (Date.now()-falandoDesde)/1000; falandoDesde=0; }
+}
+function ligarFlushFala(){
+  clearInterval(falaFlush);
+  falaFlush=setInterval(async()=>{
+    if(falandoDesde){ falaAcum += (Date.now()-falandoDesde)/1000; falandoDesde=Date.now(); }
+    const secs=Math.round(falaAcum);
+    if(secs<5 || !srv || !sb) return;
+    falaAcum-=secs;
+    try{ await sb.rpc("add_voice",{ p_server:srv.id, p_secs:secs }); }catch(e){}
+  }, 45000);
+}
+function abrirRanking(dias){
+  $("rankModal").hidden=false;
+  [["rank7",7],["rank30",30],["rank999",3650]].forEach(([id,d])=>$(id).classList.toggle("on", d===dias));
+  carregarRanking(dias);
+}
+async function carregarRanking(dias){
+  const box=$("rankList");
+  if(!srv||!sb){ box.textContent="o ranking existe dentro de um servidor"; return; }
+  box.textContent="carregando…";
+  try{
+    const { data, error } = await sb.rpc("ranking",{ p_server:srv.id, p_days:dias });
+    if(error) throw error;
+    if(!data || !data.length){ box.textContent="ninguém falou ainda por aqui"; return; }
+    const maior=Math.max(...data.map(r=>Number(r.segundos)||0)) || 1;
+    box.innerHTML="";
+    data.forEach((r,i)=>{
+      const d=document.createElement("div"); d.className="rank-row"+(i<3?" top"+(i+1):"");
+      const pos=document.createElement("span"); pos.className="rank-pos"; pos.textContent="#"+(i+1);
+      const av=document.createElement("span"); av.className="avatar"; pintarAvatar(av, r.nome, r.foto);
+      const col=document.createElement("div"); col.style.flex="1"; col.style.minWidth="0";
+      const n=document.createElement("div"); n.className="rank-nome"; n.textContent=r.nome;
+      const bar=document.createElement("div"); bar.className="rank-bar"; bar.style.width=Math.max(4,(Number(r.segundos)/maior)*100)+"%";
+      col.append(n,bar);
+      const t=document.createElement("span"); t.className="rank-t"; t.textContent=fmtTempo(Number(r.segundos)*1000);
+      d.append(pos,av,col,t); box.append(d);
+    });
+  }catch(e){ box.textContent="não consegui carregar o ranking"; }
+}
+$("rankClose").onclick=()=>$("rankModal").hidden=true;
+$("rankModal").onclick=e=>{ if(e.target===$("rankModal")) $("rankModal").hidden=true; };
+$("rank7").onclick=()=>abrirRanking(7);
+$("rank30").onclick=()=>abrirRanking(30);
+$("rank999").onclick=()=>abrirRanking(3650);
 
 /* ================= qualidade da voz (diagnóstico) ================= */
 const qual=new Map();          // id -> {perda, jitter, kbps}
@@ -4022,7 +4233,7 @@ async function onMus(d){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.03.3";
+const VERSION="2026.09.04.1";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;
@@ -4045,7 +4256,7 @@ window.addEventListener("focus",()=>{ if($("updateBar").hidden) checkUpdate(); }
   try{
     if(sb){
       const p=await carregarPerfil();
-      if(p) mostrarLobby();
+      if(p){ mostrarLobby(); carregarServidores(); }
     }
   }catch(e){ authErr("Servidor de contas fora do ar. Dá para entrar sem conta."); }
 })();

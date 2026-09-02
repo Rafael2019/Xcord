@@ -1155,6 +1155,32 @@
           <div style="font-size:11.5px;color:var(--dim);line-height:1.5" id="audioHint">A barra fica verde quando você está sendo ouvido.</div>
           <label class="check" style="margin:0"><input type="checkbox" id="optNS" checked><span>Supressão de ruído <i>(desligue se sua voz sumir em pedaços)</i></span></label>
           <label class="check" style="margin:0"><input type="checkbox" id="optAGC" checked><span>Volume automático</span></label>
+          <div class="volrow" style="padding-left:0">
+            <span class="vlab">MODO</span>
+            <select class="pick" id="audMode" style="flex:1;max-width:none">
+              <option value="voz">voz — leve, cancela eco e ruído</option>
+              <option value="hifi">alta fidelidade — estéreo 256 kbps</option>
+            </select>
+          </div>
+          <div class="qual-head">Transmissão de tela</div>
+          <div class="volrow" style="padding-left:0">
+            <span class="vlab">QUALIDADE</span>
+            <select class="pick" id="qPreset" style="flex:1;max-width:none">
+              <option value="auto">automático — divide pelo número de espectadores</option>
+              <option value="720p30">720p 30 — rede fraca</option>
+              <option value="1080p30">1080p 30 — padrão</option>
+              <option value="1080p60">1080p 60 — jogo fluido</option>
+              <option value="1440p30">1440p 30 — nítido</option>
+              <option value="4k30">4K 30 — máximo</option>
+            </select>
+          </div>
+          <div class="volrow" style="padding-left:0">
+            <span class="vlab">UPLOAD</span>
+            <input type="range" id="upMbps" min="3" max="60" step="1">
+            <span class="volnum" id="upMbpsN">12</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--dim);line-height:1.5" id="upHint">Quanto do seu envio pode ser usado. Com 2 pessoas assistindo, cada uma recebe metade disso.</div>
+          <div class="row"><button class="pill small" id="btnMedirUp">medir minha banda</button><span class="mus-hint" id="upMedido"></span></div>
           <div class="qual-head">Qualidade de quem você ouve</div>
           <div class="qual" id="qualBox">—</div>
         </div>
@@ -1267,7 +1293,7 @@ let outCalls=new Map();      // "kind:id" -> MediaConnection
 let feeds=new Map();         // "kind:id" -> {id,kind,name,stream,self}
 let voiceIn=new Map();       // id -> {stream,el,src,gain,an}
 let talking=new Set(), meters=new Map(), meterLoop=null;
-let dragging=false, renderQueued=false, migrating=false, leaving=false;
+let dragging=false, renderQueued=false, migrating=false, leaving=false, ultimoNTrans=0;
 let roomPass="", pending=[], blocked=new Set(), clipChunks=[], clipRec=null, clipStream=null;
 let deaf=false, voiceSince=0, timerLoop=null;
 let netTimer=null, lastPong=0, pingTimer=null, reconnectTries=0, wasHub=false;
@@ -1282,6 +1308,39 @@ let myText="geral", myVoice=null, unreadCh={}, mentions={};
 const chName=id=>(VOICE_CH.find(c=>c.id===id)||{}).name||id;
 const isFileCh=id=>!!(TEXT_CH.find(c=>c.id===id)||{}).files;
 let vols = (()=>{ try{ return JSON.parse(store.get("castify.vols","{}")); }catch(e){ return {}; } })();
+
+/* ================= qualidade de áudio (Opus estéreo) =================
+   O WebRTC negocia Opus em modo voz (mono, ~32 kbps) por padrão. Para ter
+   estéreo e taxa alta é preciso reescrever a linha fmtp do SDP — não existe
+   API para isso, então interceptamos a descrição antes de ela ser aplicada. */
+let hifi = store.get("castify.hifi","0")==="1";
+function opusAlta(sdp){
+  if(!hifi) return sdp;
+  return sdp.replace(/a=fmtp:(\d+) ([^\r\n]*)/g, (m, pt, params)=>{
+    // só mexe no payload do Opus
+    const rtpmap=new RegExp("a=rtpmap:"+pt+" opus","i");
+    if(!rtpmap.test(sdp)) return m;
+    const novo=params
+      .replace(/;?\s*stereo=\d/g,"").replace(/;?\s*sprop-stereo=\d/g,"")
+      .replace(/;?\s*maxaveragebitrate=\d+/g,"").replace(/;?\s*useinbandfec=\d/g,"");
+    return "a=fmtp:"+pt+" "+novo+";stereo=1;sprop-stereo=1;maxaveragebitrate=256000;useinbandfec=1;maxplaybackrate=48000";
+  });
+}
+(function patchSDP(){
+  const P=window.RTCPeerConnection && window.RTCPeerConnection.prototype;
+  if(!P || P.__castify) return;
+  P.__castify=true;
+  const setLocal=P.setLocalDescription;
+  P.setLocalDescription=function(desc){
+    try{ if(desc && desc.sdp) desc={type:desc.type, sdp:opusAlta(desc.sdp)}; }catch(e){}
+    return setLocal.call(this, desc);
+  };
+  const setRemote=P.setRemoteDescription;
+  P.setRemoteDescription=function(desc){
+    try{ if(desc && desc.sdp) desc={type:desc.type, sdp:opusAlta(desc.sdp)}; }catch(e){}
+    return setRemote.call(this, desc);
+  };
+})();
 
 /* ================= áudio: um grafo só ================= */
 let actx=null, mixDest=null, micGain=null, sfxGain=null, micSrc=null, uiGain=null, gateGain=null;
@@ -1540,6 +1599,15 @@ function renderPeople(){
     }
     ul.append(li);
   });
+  const nTrans=roster.filter(p=>p.streaming && p.ch===myVoice).length;
+  if(nTrans!==ultimoNTrans){
+    const antes=ultimoNTrans; ultimoNTrans=nTrans;
+    if(screenStream && nTrans>1 && nTrans>antes){
+      const q=presetAtual();
+      toast(nTrans+" transmissões no ar — ajustei para "+q.w+"×"+q.h+" a "+Math.round(q.kbps/1000)+" Mbps");
+    }
+    setTimeout(retunarTela, 900);
+  }
   const live=roster.filter(p=>p.streaming).map(p=>p.name);
   if(!peer) setStatus("off","fora da sala");
   else if(live.length) setStatus("live", live.length===1? live[0]+" transmitindo" : live.length+" transmitindo");
@@ -2423,8 +2491,58 @@ function listenForCalls(){
     call.on("error",()=>removeFeed(kind,call.peer));
   });
 }
-const FPS=30;
-function targetFps(){ return FPS; }
+const PRESETS={
+  "720p30":  {w:1280,h:720, fps:30, kbps:3000,  hint:"detail"},
+  "1080p30": {w:1920,h:1080,fps:30, kbps:6000,  hint:"detail"},
+  "1080p60": {w:1920,h:1080,fps:60, kbps:9000,  hint:"motion"},
+  "1440p30": {w:2560,h:1440,fps:30, kbps:11000, hint:"detail"},
+  "4k30":    {w:3840,h:2160,fps:30, kbps:18000, hint:"detail"}
+};
+function orcamento(){ return Number(store.get("castify.upmbps","12")); }   // upload que você aceita gastar
+function espectadores(){ return Math.max(1, [...outCalls.keys()].filter(k=>k.startsWith("screen:")).length); }
+/* Cada espectador recebe uma cópia própria do vídeo. Com 2 pessoas assistindo,
+   o upload gasto é o dobro do bitrate — então o bitrate útil é o orçamento / N. */
+function porPessoa(){ return (orcamento()*1000) / espectadores(); }
+/* Quantas transmissões estão no ar no meu canal. Se são duas ou três,
+   quem assiste está BAIXANDO todas elas ao mesmo tempo — então cada um
+   precisa ceder banda, senão o gargalo sai do meu upload e vai para o
+   download dos outros (e para a CPU deles, que decodifica tudo junto). */
+function transmissoresAtivos(){
+  const n = roster.filter(r=>r.streaming && r.ch===myVoice).length;
+  return Math.max(1, n || (screenStream?1:0) || 1);
+}
+function fatorCompartilhado(){
+  const n=transmissoresAtivos();
+  return n>=3 ? 0.45 : n===2 ? 0.6 : 1;      // sobra folga para voz e para o sistema
+}
+function presetAuto(){
+  const kbps=porPessoa()*fatorCompartilhado();
+  if(kbps>=10000) return {...PRESETS["1440p30"], kbps:Math.min(11000,kbps), auto:true};
+  if(kbps>=7000)  return {...PRESETS["1080p60"], kbps:Math.min(9000,kbps),  auto:true};
+  if(kbps>=4000)  return {...PRESETS["1080p30"], kbps:Math.min(6000,kbps),  auto:true};
+  if(kbps>=2000)  return {...PRESETS["720p30"],  kbps:Math.min(3000,kbps),  auto:true};
+  return {w:1280,h:720,fps:24,kbps:1600,hint:"detail",auto:true};
+}
+function presetAtual(){
+  const escolha=store.get("castify.preset","auto");
+  if(escolha==="auto") return presetAuto();
+  let p=PRESETS[escolha]||PRESETS["1080p30"];
+  // com mais de um transmitindo, teto de 1080p30: 1440p ou 4K vezes três não
+  // cabe em rede doméstica nenhuma, e a decodificação simultânea derruba o fps
+  if(transmissoresAtivos()>1 && (p.w>1920 || p.fps>30)) p=PRESETS["1080p30"];
+  return {...p, kbps: Math.min(p.kbps, porPessoa()*fatorCompartilhado()) };
+}
+function retunarTela(){
+  if(!screenStream) return;
+  const q=presetAtual();
+  const vt=screenStream.getVideoTracks()[0];
+  if(vt){
+    vt.contentHint=q.hint;
+    try{ vt.applyConstraints({ frameRate:{ideal:q.fps,max:q.fps}, width:{ideal:q.w}, height:{ideal:q.h} }); }catch(e){}
+  }
+  outCalls.forEach((c,k)=>{ if(k.startsWith("screen:")) tuneSender(c,"screen"); });
+}
+function targetFps(){ return presetAtual().fps; }
 async function tuneSender(call,kind){
   const pc=call.peerConnection; if(!pc) return;
   if(kind==="voice"){                                   // voz: banda maior e prioridade de rede
@@ -2432,7 +2550,7 @@ async function tuneSender(call,kind){
     try{
       const p=a.getParameters();
       if(!p.encodings||!p.encodings.length) p.encodings=[{}];
-      p.encodings[0].maxBitrate=64000;
+      p.encodings[0].maxBitrate = hifi ? 256000 : 64000;
       p.encodings[0].networkPriority="high";
       p.encodings[0].priority="high";
       await a.setParameters(p);
@@ -2444,9 +2562,10 @@ async function tuneSender(call,kind){
     const p=sender.getParameters();
     if(!p.encodings||!p.encodings.length) p.encodings=[{}];
     if(kind==="screen"){
-      p.encodings[0].maxBitrate = 6000000;              // banda cheia para 30fps = imagem mais limpa
-      p.encodings[0].maxFramerate = FPS;
-      p.degradationPreference = "maintain-resolution";  // quando aperta, perde quadro em vez de nitidez
+      const q=presetAtual();
+      p.encodings[0].maxBitrate = q.kbps*1000;
+      p.encodings[0].maxFramerate = q.fps;
+      p.degradationPreference = q.fps>=60 ? "maintain-framerate" : "maintain-resolution";
     }else{
       p.encodings[0].maxBitrate = 1200000;
       p.encodings[0].maxFramerate = 24;
@@ -2482,8 +2601,14 @@ function callPeer(kind,id,stream){
     call.on("error",()=>outCalls.delete(feedKey(kind,id)));
   }catch(e){}
 }
-function callMissing(kind,stream){ roster.forEach(p=>{ if(peer&&p.id!==peer.id&&sameVoice(p.id)&&!outCalls.has(feedKey(kind,p.id))) callPeer(kind,p.id,stream); }); }
-function closeKind(kind){ outCalls.forEach((c,k)=>{ if(k.startsWith(kind+":")){ try{c.close();}catch(e){} outCalls.delete(k); } }); }
+function callMissing(kind,stream){
+  roster.forEach(p=>{ if(peer&&p.id!==peer.id&&sameVoice(p.id)&&!outCalls.has(feedKey(kind,p.id))) callPeer(kind,p.id,stream); });
+  if(kind==="screen") setTimeout(retunarTela, 1200);      // redivide a banda entre os espectadores
+}
+function closeKind(kind){
+  outCalls.forEach((c,k)=>{ if(k.startsWith(kind+":")){ try{c.close();}catch(e){} outCalls.delete(k); } });
+  if(kind!=="screen") setTimeout(retunarTela, 800);
+}
 
 /* ================= estado próprio ================= */
 function announce(patch,say,kind){
@@ -2504,14 +2629,16 @@ $("btnScreen").onclick=async()=>{
   if(!myVoice) return toast("Entre num canal de voz para transmitir");
   const fps=targetFps();
   try{
+    const q=presetAtual();
     screenStream=await navigator.mediaDevices.getDisplayMedia({
-      video:{ frameRate:{ideal:fps,max:fps}, width:{ideal:1920}, height:{ideal:1080} },
-      audio:true
+      video:{ frameRate:{ideal:q.fps,max:q.fps}, width:{ideal:q.w}, height:{ideal:q.h} },
+      // som do que está sendo transmitido: sem processamento, é música/jogo e não voz
+      audio:{ echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:2, sampleRate:48000 }
     });
   }catch(e){ toast("A captura não começou"); return; }
   const vt=screenStream.getVideoTracks()[0];
   // "motion" diz ao codec para preservar fluidez em vez de nitidez — sem isso o WebRTC derruba o fps
-  vt.contentHint = "detail";
+  vt.contentHint = presetAtual().hint;
   startStats();
   setLbl("btnScreen","Parar tela"); $("btnScreen").classList.add("on");
   addFeed("screen",peer.id,screenStream,myName(),true);
@@ -2545,8 +2672,10 @@ function startStats(){
           const at=r.timestamp, kbps = lastAt ? Math.round((r.bytesSent-lastBytes)*8/(at-lastAt)) : 0;
           lastBytes=r.bytesSent; lastAt=at;
           const fps=Math.round(r.framesPerSecond||0);
-          if(active===feedKey("screen",peer.id))
-            $("meta").textContent = `${r.frameWidth||"?"}×${r.frameHeight||"?"} · ${fps}fps · ${kbps} kbps · saindo`;
+          if(active===feedKey("screen",peer.id)){
+            const n=espectadores();
+            $("meta").textContent = `${r.frameWidth||"?"}×${r.frameHeight||"?"} · ${fps}fps · ${kbps} kbps · ${n} assistindo`;
+          }
         }
       });
     }catch(e){}
@@ -2605,7 +2734,10 @@ async function setMicSource(deviceId){
   let s;
   try{
     s = await navigator.mediaDevices.getUserMedia({
-      audio: Object.assign({
+      audio: Object.assign(hifi ? {
+        echoCancellation:false, noiseSuppression:false, autoGainControl:false,
+        channelCount:2, sampleRate:48000, sampleSize:16, latency:0
+      } : {
         echoCancellation:true,
         noiseSuppression: $("optNS") ? $("optNS").checked : true,
         autoGainControl: $("optAGC") ? $("optAGC").checked : true
@@ -3849,6 +3981,60 @@ $("ctxKick").onclick=()=>{
 
 /* ================= painel do usuário ================= */
 $("btnCfg").onclick=()=>{ $("cfgModal").hidden=false; pintarQualidade(); };
+$("audMode").value = hifi ? "hifi" : "voz";
+$("audMode").onchange=async e=>{
+  hifi = e.target.value==="hifi";
+  store.set("castify.hifi", hifi?"1":"0");
+  $("optNS").disabled = hifi; $("optAGC").disabled = hifi;
+  if(micOn){
+    // precisa renegociar: fecha as chamadas de voz e refaz com o novo perfil
+    closeKind("voice");
+    await setMicSource(micDeviceId);
+    callMissing("voice", mixDest.stream);
+    toast(hifi?"Alta fidelidade ligada — use fone, o eco volta a existir":"Modo voz ligado");
+  }else{
+    toast(hifi?"Alta fidelidade ligada":"Modo voz ligado");
+  }
+};
+$("qPreset").value = store.get("castify.preset","auto");
+$("upMbps").value = store.get("castify.upmbps","12");
+$("upMbpsN").textContent = $("upMbps").value;
+$("upMbps").oninput=e=>{
+  store.set("castify.upmbps", e.target.value);
+  $("upMbpsN").textContent=e.target.value;
+  const q=presetAtual();
+  const nt=transmissoresAtivos();
+  $("upHint").textContent =
+    (espectadores()>1 ? "Com "+espectadores()+" assistindo: " : "Sozinho na sala: ")
+    + Math.round(q.kbps/1000)+" Mbps por pessoa, "+q.w+"×"+q.h+" a "+q.fps+"fps."
+    + (nt>1 ? " "+nt+" transmitindo ao mesmo tempo, então cada um cede banda." : "");
+  retunarTela();
+};
+$("btnMedirUp").onclick=async()=>{
+  // a estimativa vem do próprio WebRTC, então só existe com transmissão no ar
+  const call=[...outCalls.entries()].find(([k])=>k.startsWith("screen:"));
+  if(!call) return $("upMedido").textContent="comece uma transmissão para medir";
+  $("upMedido").textContent="medindo…";
+  try{
+    const st=await call[1].peerConnection.getStats();
+    let disp=0;
+    st.forEach(r=>{ if(r.type==="candidate-pair" && r.availableOutgoingBitrate) disp=Math.max(disp, r.availableOutgoingBitrate); });
+    if(!disp) return $("upMedido").textContent="o navegador não estimou ainda — espere uns segundos";
+    const mbps=disp/1e6, total=Math.round(mbps*espectadores()*10)/10;
+    $("upMedido").textContent = Math.round(mbps*10)/10+" Mbps por pessoa agora (~"+total+" no total)";
+  }catch(e){ $("upMedido").textContent="não consegui medir"; }
+};
+$("qPreset").onchange=async e=>{
+  store.set("castify.preset", e.target.value);
+  const q=presetAtual();
+  if(screenStream){
+    retunarTela();
+    toast(e.target.value==="auto" ? "Automático: "+q.w+"×"+q.h+" a "+Math.round(q.kbps/1000)+" Mbps por pessoa" : "Transmissão em "+e.target.value);
+  }else{
+    toast("Vale na próxima transmissão: "+e.target.value);
+  }
+};
+if(hifi){ $("optNS").disabled=true; $("optAGC").disabled=true; }
 ["optNS","optAGC"].forEach(k=>{
   const el=$(k); if(!el) return;
   el.checked = store.get("castify."+k,"1")==="1";
@@ -4272,7 +4458,7 @@ async function onMus(d){
 }
 
 /* ================= versão e atualização ================= */
-const VERSION="2026.09.04.3";
+const VERSION="2026.09.05.3";
 $("ver").textContent="v"+VERSION;
 async function checkUpdate(){
   if(location.protocol==="file:") return;
